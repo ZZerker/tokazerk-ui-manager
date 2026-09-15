@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TokaZerkUIConfig.Domain</AssemblyName>
+    <RootNamespace>TokaZerkUIConfig.Domain</RootNamespace>
+  </PropertyGroup>
+
+</Project>
