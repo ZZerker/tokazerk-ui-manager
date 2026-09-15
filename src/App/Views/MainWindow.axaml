@@ -1,0 +1,115 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:TokaZerkUIConfig.App.ViewModels"
+        xmlns:views="using:TokaZerkUIConfig.App.Views"
+        x:Class="TokaZerkUIConfig.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="TokaZerk UI Config"
+        Width="720"
+        Height="480"
+        CanResize="False"
+        Background="{StaticResource GroundBrush}"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        FontFamily="{StaticResource TokaFont}"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="32">
+
+  <Window.DataTemplates>
+    <DataTemplate DataType="vm:InstallViewModel">
+      <views:InstallView />
+    </DataTemplate>
+    <DataTemplate DataType="vm:MapsViewModel">
+      <views:MapsView />
+    </DataTemplate>
+    <DataTemplate DataType="vm:FontsViewModel">
+      <views:FontsView />
+    </DataTemplate>
+    <DataTemplate DataType="vm:WindowsViewModel">
+      <views:WindowsView />
+    </DataTemplate>
+    <DataTemplate DataType="vm:UpdatesViewModel">
+      <views:UpdatesView />
+    </DataTemplate>
+  </Window.DataTemplates>
+
+  <Grid RowDefinitions="32,*,36">
+
+    <Border Grid.Row="0"
+            Background="Transparent"
+            PointerPressed="OnTitleBarPointerPressed">
+      <Grid ColumnDefinitions="*,32,32">
+        <TextBlock Grid.Column="0"
+                   Text="TokaZerk UI Config"
+                   Foreground="{StaticResource TextSecondaryBrush}"
+                   FontSize="12"
+                   VerticalAlignment="Center"
+                   Margin="12,0,0,0" />
+        <Button Grid.Column="1"
+                Classes="chrome"
+                Width="32"
+                Height="32"
+                Click="OnMinimizeClick"
+                ToolTip.Tip="Minimize"
+                AutomationProperties.Name="Minimize">
+          <Border Width="10" Height="1" Background="{StaticResource TextPrimaryBrush}" />
+        </Button>
+        <Button Grid.Column="2"
+                Classes="chrome close"
+                Content="x"
+                Width="32"
+                Height="32"
+                Click="OnCloseClick"
+                ToolTip.Tip="Close"
+                AutomationProperties.Name="Close" />
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1" ColumnDefinitions="140,1,*">
+
+      <Border Grid.Column="0" Background="{StaticResource RailSurfaceBrush}">
+        <ListBox Classes="rail"
+                 ItemsSource="{Binding Sections}"
+                 SelectedItem="{Binding Selected}">
+          <ListBox.ItemTemplate>
+            <DataTemplate DataType="vm:SectionViewModel">
+              <TextBlock Text="{Binding Title}" />
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Border>
+
+      <Border Grid.Column="1" Background="{StaticResource HairlineBrush}" />
+
+      <ContentControl Grid.Column="2" Content="{Binding Selected}" />
+
+    </Grid>
+
+    <Grid Grid.Row="2">
+      <Border BorderBrush="{StaticResource HairlineBrush}" BorderThickness="0,1,0,0" />
+      <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="12,0">
+        <TextBlock Grid.Column="0"
+                   Text="{Binding InstallPath, TargetNullValue='No install selected'}"
+                   Foreground="{StaticResource TextSecondaryBrush}"
+                   TextTrimming="CharacterEllipsis"
+                   VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1"
+                   Text="Unsaved changes"
+                   IsVisible="{Binding HasUnsavedChanges}"
+                   Foreground="{StaticResource TextSecondaryBrush}"
+                   VerticalAlignment="Center"
+                   Margin="12,0" />
+        <Button Grid.Column="2"
+                Classes="destructive"
+                Content="Reset"
+                Command="{Binding ResetCommand}"
+                Margin="6,0" />
+        <Button Grid.Column="3"
+                Content="Apply"
+                Command="{Binding ApplyCommand}" />
+      </Grid>
+    </Grid>
+
+  </Grid>
+
+</Window>

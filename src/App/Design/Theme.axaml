@@ -1,0 +1,123 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Styles.Resources>
+    <ResourceDictionary>
+      <FontFamily x:Key="TokaFont">avares://TokaZerkUIConfig.App/Assets/Fonts#IBM Plex Sans</FontFamily>
+
+      <SolidColorBrush x:Key="GroundBrush">#181717</SolidColorBrush>
+      <SolidColorBrush x:Key="AccentBrush">#38A59D</SolidColorBrush>
+      <SolidColorBrush x:Key="TextPrimaryBrush">#E5E5E5</SolidColorBrush>
+      <SolidColorBrush x:Key="TextSecondaryBrush">#C0C0C0</SolidColorBrush>
+      <SolidColorBrush x:Key="DestructiveBrush">#721010</SolidColorBrush>
+      <SolidColorBrush x:Key="HairlineBrush">#1AFFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="RailSurfaceBrush">#1E1D1D</SolidColorBrush>
+    </ResourceDictionary>
+  </Styles.Resources>
+
+  <Style Selector="Button">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource HairlineBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="Padding" Value="8,4" />
+  </Style>
+
+  <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{StaticResource HairlineBrush}" />
+    <Setter Property="TextBlock.Foreground" Value="{StaticResource AccentBrush}" />
+  </Style>
+
+  <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{StaticResource HairlineBrush}" />
+    <Setter Property="TextBlock.Foreground" Value="{StaticResource AccentBrush}" />
+  </Style>
+
+  <Style Selector="Button:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{StaticResource HairlineBrush}" />
+    <Setter Property="TextBlock.Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    <Setter Property="Opacity" Value="0.5" />
+  </Style>
+
+  <Style Selector="Button.destructive">
+    <Setter Property="Background" Value="{StaticResource DestructiveBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource HairlineBrush}" />
+  </Style>
+
+  <Style Selector="Button.destructive:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource DestructiveBrush}" />
+  </Style>
+
+  <Style Selector="Button.destructive:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource DestructiveBrush}" />
+  </Style>
+
+  <Style Selector="Button.destructive:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource DestructiveBrush}" />
+    <Setter Property="Opacity" Value="0.5" />
+  </Style>
+
+  <Style Selector="Button.chrome">
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.chrome:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource RailSurfaceBrush}" />
+  </Style>
+
+  <Style Selector="Button.chrome.close:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource DestructiveBrush}" />
+  </Style>
+
+  <Style Selector="ListBox.rail">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="ListBox.rail ListBoxItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="2,0,0,0" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="Padding" Value="12,8" />
+    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <Style Selector="ListBox.rail ListBoxItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="TextBlock.Foreground" Value="{StaticResource TextPrimaryBrush}" />
+  </Style>
+
+  <Style Selector="ListBox.rail ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="TextBlock.Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+  </Style>
+
+  <Style Selector="ListBox.rail ListBoxItem:selected:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="TextBlock.Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+  </Style>
+
+  <Style Selector="ListBox.rail ListBoxItem:selected:focus /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="TextBlock.Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+  </Style>
+
+  <Style Selector="ListBox.rail ListBoxItem:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="TextBlock.Foreground" Value="{StaticResource TextPrimaryBrush}" />
+  </Style>
+
+</Styles>
