@@ -1,0 +1,23 @@
+using System.IO.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
+using TokaZerkUIConfig.Domain.Ports;
+
+namespace TokaZerkUIConfig.Infrastructure;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services)
+    {
+        services.AddSingleton<IFileSystem, FileSystem>();
+        services.AddSingleton(LocatorEnvironment.Current());
+
+        services.AddSingleton<IFontDefinitionStore, AssetsXmlFontStore>();
+        services.AddSingleton<ISettingsRepository, JsonSettingsRepository>();
+        services.AddSingleton<IBackupStore, FolderBackupStore>();
+        services.AddSingleton<IVariantStore, FileVariantStore>();
+        services.AddSingleton<IInstallLocator, PlatformInstallLocator>();
+        services.AddSingleton<IUiVersionReader, VersionInfoReader>();
+
+        return services;
+    }
+}
