@@ -41,7 +41,7 @@ public sealed class TokazerkJsonReader(IFileSystem fileSystem) : IInstalledUiRea
                 && nameElement.GetString() == TOKAZERK_UI_NAME
                 && root.TryGetProperty("version", out var versionElement)
                 && versionElement.ValueKind == JsonValueKind.String
-                && TryParseExactVersion(versionElement.GetString(), out var version)
+                && SemVer.TryParse(versionElement.GetString(), out var version)
                 && root.TryGetProperty("built", out var builtElement)
                 && builtElement.ValueKind == JsonValueKind.String
                 && DateOnly.TryParseExact(
@@ -59,26 +59,5 @@ public sealed class TokazerkJsonReader(IFileSystem fileSystem) : IInstalledUiRea
         }
 
         return new InstalledUi(InstalledUiKind.Other, null);
-    }
-
-    private static bool TryParseExactVersion(string? text, out SemVer version)
-    {
-        version = default;
-        if (text is null)
-        {
-            return false;
-        }
-
-        var components = text.Split('.');
-        if (components.Length != 3
-            || !int.TryParse(components[0], NumberStyles.None, CultureInfo.InvariantCulture, out var major)
-            || !int.TryParse(components[1], NumberStyles.None, CultureInfo.InvariantCulture, out var minor)
-            || !int.TryParse(components[2], NumberStyles.None, CultureInfo.InvariantCulture, out var patch))
-        {
-            return false;
-        }
-
-        version = new SemVer(major, minor, patch);
-        return true;
     }
 }

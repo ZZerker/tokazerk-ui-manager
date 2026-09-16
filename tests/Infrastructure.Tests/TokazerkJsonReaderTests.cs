@@ -124,4 +124,20 @@ public class TokazerkJsonReaderTests
 
         Assert.Equal(new InstalledUi(InstalledUiKind.Other, null), installedUi);
     }
+
+    [Fact]
+    public async Task ReadAsyncReturnsTokaZerkForBetaVersion()
+    {
+        var fileSystem = new MockFileSystem();
+        fileSystem.AddDirectory("custom");
+        fileSystem.AddFile(
+            "custom/tokazerk.json",
+            new MockFileData("""{"name":"TokaZerkUI","version":"1.0.12-beta.1","built":"2026-09-15"}"""));
+        var reader = new TokazerkJsonReader(fileSystem);
+
+        var installedUi = await reader.ReadAsync("custom", CancellationToken.None);
+
+        Assert.Equal(InstalledUiKind.TokaZerk, installedUi.Kind);
+        Assert.Equal(new SemVer(1, 0, 12, 0, 1), installedUi.Version);
+    }
 }
