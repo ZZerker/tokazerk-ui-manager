@@ -90,6 +90,133 @@ public sealed class ZipUiArchiveStore(IFileSystem fileSystem, IInstalledUiReader
         }
     }
 
+    private const string CUSTOM_PREFIX = "custom/";
+
+    public string CreateDownloadPath(string customPath)
+    {
+        var uiPath = fileSystem.Path.GetDirectoryName(fileSystem.Path.GetFullPath(customPath).TrimEnd('\\', '/'))
+            ?? throw new ArgumentException("The custom UI path must have a parent directory", nameof(customPath));
+        var backupsPath = fileSystem.Path.Combine(uiPath, "backups");
+        fileSystem.Directory.CreateDirectory(backupsPath);
+        return fileSystem.Path.Combine(backupsPath, $".download-{Guid.NewGuid():N}.zip");
+    }
+
+    public void Verify(string zipPath, string customPath)
+    {
+        var normalizedCustomPath = fileSystem.Path.GetFullPath(customPath).TrimEnd('\\', '/');
+
+        using var archive = ZipFile.OpenRead(zipPath);
+        var hasAnyEntry = false;
+        var hasCustomRoot = true;
+        var hasSettingsFile = false;
+        foreach (var entry in archive.Entries)
+        {
+            hasAnyEntry = true;
+            if (!entry.FullName.StartsWith(CUSTOM_PREFIX, StringComparison.Ordinal))
+            {
+                hasCustomRoot = false;
+                continue;
+            }
+
+            if (entry.FullName == $"{CUSTOM_PREFIX}tokazerk.json")
+            {
+                hasSettingsFile = true;
+            }
+
+            if (string.IsNullOrEmpty(entry.Name))
+            {
+                continue;
+            }
+
+            var target = fileSystem.Path.GetFullPath(
+                fileSystem.Path.Combine(normalizedCustomPath, entry.FullName[CUSTOM_PREFIX.Length..]));
+            if (!target.StartsWith(normalizedCustomPath + fileSystem.Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            {
+                throw new InvalidDataException($"The UI archive entry is outside the custom directory: {entry.FullName}");
+            }
+        }
+
+        if (!hasAnyEntry || !hasCustomRoot)
+        {
+            throw new InvalidDataException("The UI archive does not have a 'custom/' root");
+        }
+
+        if (!hasSettingsFile)
+        {
+            throw new InvalidDataException("The UI archive is missing custom/tokazerk.json");
+        }
+    }
+
+    public void DiscardDownload(string downloadPath)
+    {
+        if (fileSystem.File.Exists(downloadPath))
+        {
+            fileSystem.File.Delete(downloadPath);
+        }
+    }
+
+    public Task InstallAsync(string zipPath, string customPath, CancellationToken ct)
+    {
+        this.Verify(zipPath, customPath);
+
+        return Task.Run(
+            () =>
+            {
+                try
+                {
+                    var normalizedCustomPath = fileSystem.Path.GetFullPath(customPath).TrimEnd('\\', '/');
+                    fileSystem.Directory.CreateDirectory(normalizedCustomPath);
+                    this.ClearDirectoryContents(normalizedCustomPath);
+
+                    using var archive = ZipFile.OpenRead(zipPath);
+                    foreach (var entry in archive.Entries)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        if (string.IsNullOrEmpty(entry.Name))
+                        {
+                            continue;
+                        }
+
+                        var relativePath = entry.FullName[CUSTOM_PREFIX.Length..];
+                        var target = fileSystem.Path.GetFullPath(fileSystem.Path.Combine(normalizedCustomPath, relativePath));
+                        if (!target.StartsWith(normalizedCustomPath + fileSystem.Path.DirectorySeparatorChar, StringComparison.Ordinal))
+                        {
+                            throw new InvalidDataException($"The UI archive entry is outside the custom directory: {entry.FullName}");
+                        }
+
+                        var targetDirectory = fileSystem.Path.GetDirectoryName(target);
+                        if (!string.IsNullOrEmpty(targetDirectory))
+                        {
+                            fileSystem.Directory.CreateDirectory(targetDirectory);
+                        }
+
+                        entry.ExtractToFile(target, overwrite: true);
+                    }
+                }
+                finally
+                {
+                    if (fileSystem.File.Exists(zipPath))
+                    {
+                        fileSystem.File.Delete(zipPath);
+                    }
+                }
+            },
+            ct);
+    }
+
+    private void ClearDirectoryContents(string normalizedCustomPath)
+    {
+        foreach (var filePath in fileSystem.Directory.GetFiles(normalizedCustomPath))
+        {
+            fileSystem.File.Delete(filePath);
+        }
+
+        foreach (var directoryPath in fileSystem.Directory.GetDirectories(normalizedCustomPath))
+        {
+            fileSystem.Directory.Delete(directoryPath, recursive: true);
+        }
+    }
+
     private void ValidateArchiveTree(string normalizedCustomPath, CancellationToken ct)
     {
         var pendingDirectories = new Stack<string>();

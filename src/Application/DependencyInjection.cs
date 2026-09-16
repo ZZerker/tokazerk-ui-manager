@@ -12,6 +12,10 @@ public static class DependencyInjection
         services.AddTransient<ApplyFontSettings>();
         services.AddTransient<ApplyVariant>();
         services.AddTransient<ResetAll>();
+        services.AddTransient<CheckForUpdates>();
+        services.AddTransient<InstallUi>();
+        services.AddTransient<UpdateUi>();
+        services.AddTransient<UpdateSelf>();
 
         return services;
     }

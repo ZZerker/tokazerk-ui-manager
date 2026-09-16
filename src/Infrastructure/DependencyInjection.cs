@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddSingleton<IUiArchiveStore, ZipUiArchiveStore>();
         services.AddSingleton<IUiPreviewRenderer, ForgePreviewRenderer>();
         services.AddSingleton<IMapThumbnailSource, DdsThumbnailSource>();
+        services.AddSingleton<ISelfUpdater, ExeSwapSelfUpdater>();
 
         return services;
     }

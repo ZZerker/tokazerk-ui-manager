@@ -62,5 +62,19 @@ public sealed class FolderBackupStore(IFileSystem fileSystem) : IBackupStore
         return Task.FromResult(false);
     }
 
+    public Task ClearAsync(string customPath, CancellationToken ct)
+    {
+        var backupRoot = fileSystem.Path.Combine(customPath, ConfigPaths.BACKUP_DIR);
+        return Task.Run(
+            () =>
+            {
+                if (fileSystem.Directory.Exists(backupRoot))
+                {
+                    fileSystem.Directory.Delete(backupRoot, recursive: true);
+                }
+            },
+            ct);
+    }
+
     private string BackupPath(string customPath, string relativePath) => fileSystem.Path.Combine(customPath, ConfigPaths.BACKUP_DIR, relativePath);
 }

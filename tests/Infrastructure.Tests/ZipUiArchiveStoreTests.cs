@@ -83,4 +83,145 @@ public class ZipUiArchiveStoreTests
 
         Assert.Contains("reparse point", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void VerifyRejectsZipWhoseEntriesAreNotUnderCustomRoot()
+    {
+        var tempRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), $"TokaZerkUIConfig-{Guid.NewGuid():N}"));
+        Directory.CreateDirectory(tempRoot);
+        try
+        {
+            var zipPath = Path.Combine(tempRoot, "release.zip");
+            using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+            {
+                archive.CreateEntry("tokazerk.json").Open().Dispose();
+            }
+
+            var fileSystem = new FileSystem();
+            var store = new ZipUiArchiveStore(fileSystem, new TokazerkJsonReader(fileSystem));
+            var customPath = Path.Combine(tempRoot, "custom");
+
+            var exception = Assert.Throws<InvalidDataException>(() => store.Verify(zipPath, customPath));
+            Assert.Contains("custom/", exception.Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(tempRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void VerifyRejectsZipMissingTokazerkJson()
+    {
+        var tempRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), $"TokaZerkUIConfig-{Guid.NewGuid():N}"));
+        Directory.CreateDirectory(tempRoot);
+        try
+        {
+            var zipPath = Path.Combine(tempRoot, "release.zip");
+            using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+            {
+                archive.CreateEntry("custom/assets.xml").Open().Dispose();
+            }
+
+            var fileSystem = new FileSystem();
+            var store = new ZipUiArchiveStore(fileSystem, new TokazerkJsonReader(fileSystem));
+            var customPath = Path.Combine(tempRoot, "custom");
+
+            var exception = Assert.Throws<InvalidDataException>(() => store.Verify(zipPath, customPath));
+            Assert.Contains("tokazerk.json", exception.Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(tempRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task InstallAsyncClearsStrayFileAndExtractsTreeWithoutCustomPrefix()
+    {
+        var tempRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), $"TokaZerkUIConfig-{Guid.NewGuid():N}"));
+        var customPath = Path.Combine(tempRoot, "custom");
+        Directory.CreateDirectory(customPath);
+        try
+        {
+            await File.WriteAllTextAsync(Path.Combine(customPath, "stray.txt"), "old content");
+
+            var zipPath = Path.Combine(tempRoot, "release.zip");
+            using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+            {
+                using (var entryStream = archive.CreateEntry("custom/tokazerk.json").Open())
+                using (var writer = new StreamWriter(entryStream))
+                {
+                    await writer.WriteAsync("""{"name":"TokaZerkUI","version":"1.0.13","built":"2026-09-16"}""");
+                }
+
+                using (var entryStream = archive.CreateEntry("custom/Options/assets.xml").Open())
+                using (var writer = new StreamWriter(entryStream))
+                {
+                    await writer.WriteAsync("assets");
+                }
+            }
+
+            var fileSystem = new FileSystem();
+            var store = new ZipUiArchiveStore(fileSystem, new TokazerkJsonReader(fileSystem));
+
+            await store.InstallAsync(zipPath, customPath, CancellationToken.None);
+
+            Assert.False(File.Exists(Path.Combine(customPath, "stray.txt")));
+            Assert.True(File.Exists(Path.Combine(customPath, "tokazerk.json")));
+            Assert.True(File.Exists(Path.Combine(customPath, "Options", "assets.xml")));
+            Assert.False(File.Exists(zipPath));
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task InstallAsyncRejectsZipSlipEntryBeforeDeletingAnything()
+    {
+        var tempRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), $"TokaZerkUIConfig-{Guid.NewGuid():N}"));
+        var customPath = Path.Combine(tempRoot, "custom");
+        Directory.CreateDirectory(customPath);
+        try
+        {
+            await File.WriteAllTextAsync(Path.Combine(customPath, "stray.txt"), "old content");
+
+            var zipPath = Path.Combine(tempRoot, "release.zip");
+            using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+            {
+                using (var entryStream = archive.CreateEntry("custom/tokazerk.json").Open())
+                using (var writer = new StreamWriter(entryStream))
+                {
+                    await writer.WriteAsync("""{"name":"TokaZerkUI","version":"1.0.13","built":"2026-09-16"}""");
+                }
+
+                using (var entryStream = archive.CreateEntry("custom/../evil.txt").Open())
+                using (var writer = new StreamWriter(entryStream))
+                {
+                    await writer.WriteAsync("evil");
+                }
+            }
+
+            var fileSystem = new FileSystem();
+            var store = new ZipUiArchiveStore(fileSystem, new TokazerkJsonReader(fileSystem));
+
+            await Assert.ThrowsAsync<InvalidDataException>(
+                () => store.InstallAsync(zipPath, customPath, CancellationToken.None));
+
+            Assert.False(File.Exists(Path.Combine(tempRoot, "evil.txt")));
+            Assert.True(File.Exists(Path.Combine(customPath, "stray.txt")));
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
 }
