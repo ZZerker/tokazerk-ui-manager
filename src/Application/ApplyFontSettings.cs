@@ -3,17 +3,8 @@ using TokaZerkUIConfig.Domain.Ports;
 
 namespace TokaZerkUIConfig.Application;
 
-public sealed class ApplyFontSettings
+public sealed class ApplyFontSettings(IFontDefinitionStore fontDefinitionStore, ISettingsRepository settingsRepository)
 {
-    private readonly IFontDefinitionStore _fontDefinitionStore;
-    private readonly ISettingsRepository _settingsRepository;
-
-    public ApplyFontSettings(IFontDefinitionStore fontDefinitionStore, ISettingsRepository settingsRepository)
-    {
-        _fontDefinitionStore = fontDefinitionStore;
-        _settingsRepository = settingsRepository;
-    }
-
     public async Task<ApplyResult> ExecuteAsync(string customPath, FontSettings fonts, CancellationToken ct)
     {
         var validation = fonts.Validate();
@@ -27,11 +18,11 @@ public sealed class ApplyFontSettings
 
         try
         {
-            await _fontDefinitionStore.WriteAsync(customPath, fonts, ct).ConfigureAwait(false);
+            await fontDefinitionStore.WriteAsync(customPath, fonts, ct).ConfigureAwait(false);
 
-            var existing = await _settingsRepository.LoadAsync(customPath, ct).ConfigureAwait(false) ?? UiSettings.Default;
+            var existing = await settingsRepository.LoadAsync(customPath, ct).ConfigureAwait(false) ?? UiSettings.Default;
             var updated = existing with { Fonts = fonts };
-            await _settingsRepository.SaveAsync(customPath, updated, ct).ConfigureAwait(false);
+            await settingsRepository.SaveAsync(customPath, updated, ct).ConfigureAwait(false);
 
             return ApplyResult.Ok(warnings);
         }
