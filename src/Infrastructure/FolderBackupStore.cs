@@ -3,21 +3,14 @@ using TokaZerkUIConfig.Domain.Ports;
 
 namespace TokaZerkUIConfig.Infrastructure;
 
-public sealed class FolderBackupStore : IBackupStore
+public sealed class FolderBackupStore(IFileSystem fileSystem) : IBackupStore
 {
-    private readonly IFileSystem _fileSystem;
-
-    public FolderBackupStore(IFileSystem fileSystem)
-    {
-        _fileSystem = fileSystem;
-    }
-
     public Task BackupOnceAsync(string customPath, string relativePath, CancellationToken ct)
     {
-        var source = _fileSystem.Path.Combine(customPath, relativePath);
-        var backup = BackupPath(customPath, relativePath);
+        var source = fileSystem.Path.Combine(customPath, relativePath);
+        var backup = this.BackupPath(customPath, relativePath);
 
-        if (_fileSystem.Directory.Exists(backup) || _fileSystem.File.Exists(backup))
+        if (fileSystem.Directory.Exists(backup) || fileSystem.File.Exists(backup))
         {
             return Task.CompletedTask;
         }
@@ -25,14 +18,14 @@ public sealed class FolderBackupStore : IBackupStore
         return Task.Run(
             () =>
             {
-                if (_fileSystem.Directory.Exists(source))
+                if (fileSystem.Directory.Exists(source))
                 {
-                    DirectoryCopy.Copy(_fileSystem, source, backup);
+                    DirectoryCopy.Copy(fileSystem, source, backup);
                 }
-                else if (_fileSystem.File.Exists(source))
+                else if (fileSystem.File.Exists(source))
                 {
-                    _fileSystem.Directory.CreateDirectory(_fileSystem.Path.GetDirectoryName(backup)!);
-                    _fileSystem.File.Copy(source, backup);
+                    fileSystem.Directory.CreateDirectory(fileSystem.Path.GetDirectoryName(backup)!);
+                    fileSystem.File.Copy(source, backup);
                 }
             },
             ct);
@@ -40,27 +33,27 @@ public sealed class FolderBackupStore : IBackupStore
 
     public Task<bool> RestoreAsync(string customPath, string relativePath, IReadOnlyList<string> preserve, CancellationToken ct)
     {
-        var target = _fileSystem.Path.Combine(customPath, relativePath);
-        var backup = BackupPath(customPath, relativePath);
+        var target = fileSystem.Path.Combine(customPath, relativePath);
+        var backup = this.BackupPath(customPath, relativePath);
 
-        if (_fileSystem.Directory.Exists(backup))
+        if (fileSystem.Directory.Exists(backup))
         {
             return Task.Run(
                 () =>
                 {
-                    DirectoryCopy.Copy(_fileSystem, backup, target, preserve);
+                    DirectoryCopy.Copy(fileSystem, backup, target, preserve);
                     return true;
                 },
                 ct);
         }
 
-        if (_fileSystem.File.Exists(backup))
+        if (fileSystem.File.Exists(backup))
         {
             return Task.Run(
                 () =>
                 {
-                    _fileSystem.Directory.CreateDirectory(_fileSystem.Path.GetDirectoryName(target)!);
-                    _fileSystem.File.Copy(backup, target, overwrite: true);
+                    fileSystem.Directory.CreateDirectory(fileSystem.Path.GetDirectoryName(target)!);
+                    fileSystem.File.Copy(backup, target, overwrite: true);
                     return true;
                 },
                 ct);
@@ -69,6 +62,5 @@ public sealed class FolderBackupStore : IBackupStore
         return Task.FromResult(false);
     }
 
-    private string BackupPath(string customPath, string relativePath) =>
-        _fileSystem.Path.Combine(customPath, ConfigPaths.BackupDir, relativePath);
+    private string BackupPath(string customPath, string relativePath) => fileSystem.Path.Combine(customPath, ConfigPaths.BACKUP_DIR, relativePath);
 }

@@ -7,7 +7,7 @@ using TokaZerkUIConfig.Domain.Ports;
 
 namespace TokaZerkUIConfig.Infrastructure;
 
-public sealed class ForgePreviewRenderer: IUiPreviewRenderer, IDisposable
+public sealed class ForgePreviewRenderer : IUiPreviewRenderer, IDisposable
 {
     private static readonly IReadOnlyList<string> SkippedFolders =
         ["Maps", "Maps_large", "Maps_small", "Options", "warmap", "tokazerk_config"];

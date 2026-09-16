@@ -5,50 +5,41 @@ using TokaZerkUIConfig.Domain.Ports;
 
 namespace TokaZerkUIConfig.Infrastructure;
 
-public sealed class PlatformInstallLocator : IInstallLocator
+public sealed class PlatformInstallLocator(IFileSystem fileSystem, LocatorEnvironment environment) : IInstallLocator
 {
-    private readonly IFileSystem _fileSystem;
-    private readonly LocatorEnvironment _environment;
-
-    public PlatformInstallLocator(IFileSystem fileSystem, LocatorEnvironment environment)
-    {
-        _fileSystem = fileSystem;
-        _environment = environment;
-    }
-
     public Task<IReadOnlyList<UiInstall>> DetectAsync(CancellationToken ct)
     {
         var found = new List<UiInstall>();
 
-        AddIfValid(found, EdenLauncherCandidate(), InstallSource.EdenLauncher);
-        AddIfValid(found, BlackthornLauncherCandidate(), InstallSource.BlackthornLauncher);
+        this.AddIfValid(found, this.EdenLauncherCandidate(), InstallSource.EdenLauncher);
+        this.AddIfValid(found, this.BlackthornLauncherCandidate(), InstallSource.BlackthornLauncher);
 
-        foreach (var prefix in WinePrefixCandidates())
+        foreach (var prefix in this.WinePrefixCandidates())
         {
             foreach (var suffix in DaocPrefixSuffixSegments)
             {
-                var root = _fileSystem.Path.Combine(new[] { prefix }.Concat(suffix).ToArray());
-                AddIfValid(found, root, InstallSource.PrefixScan);
+                var root = fileSystem.Path.Combine(new[] { prefix }.Concat(suffix).ToArray());
+                this.AddIfValid(found, root, InstallSource.PrefixScan);
             }
         }
 
-        if (_environment.IsWindows)
+        if (environment.IsWindows)
         {
-            if (!string.IsNullOrEmpty(_environment.ProgramFilesX86))
+            if (!string.IsNullOrEmpty(environment.ProgramFilesX86))
             {
-                AddIfValid(found, _fileSystem.Path.Combine(_environment.ProgramFilesX86, "Electronic Arts", "Dark Age of Camelot"), InstallSource.WellKnown);
+                this.AddIfValid(found, fileSystem.Path.Combine(environment.ProgramFilesX86, "Electronic Arts", "Dark Age of Camelot"), InstallSource.WellKnown);
             }
 
-            if (!string.IsNullOrEmpty(_environment.ProgramFiles))
+            if (!string.IsNullOrEmpty(environment.ProgramFiles))
             {
-                AddIfValid(found, _fileSystem.Path.Combine(_environment.ProgramFiles, "Electronic Arts", "Dark Age of Camelot"), InstallSource.WellKnown);
+                this.AddIfValid(found, fileSystem.Path.Combine(environment.ProgramFiles, "Electronic Arts", "Dark Age of Camelot"), InstallSource.WellKnown);
             }
 
-            AddIfValid(found, @"C:\Spiele\Eden DAoC", InstallSource.WellKnown);
+            this.AddIfValid(found, @"C:\Spiele\Eden DAoC", InstallSource.WellKnown);
         }
 
         var deduped = found
-            .GroupBy(i => Normalize(i.GameRoot))
+            .GroupBy(i => this.Normalize(i.GameRoot))
             .Select(g => g.First())
             .ToList();
 
@@ -57,15 +48,15 @@ public sealed class PlatformInstallLocator : IInstallLocator
 
     public UiInstall? Validate(string path)
     {
-        var root = ResolveRoot(path);
-        return BuildInstall(root, InstallSource.Manual);
+        var root = this.ResolveRoot(path);
+        return this.BuildInstall(root, InstallSource.Manual);
     }
 
     private static readonly string[][] DaocPrefixSuffixSegments =
-    {
-        new[] { "drive_c", "Program Files (x86)", "Electronic Arts", "Dark Age of Camelot" },
-        new[] { "drive_c", "Program Files", "Electronic Arts", "Dark Age of Camelot" },
-    };
+    [
+            ["drive_c", "Program Files (x86)", "Electronic Arts", "Dark Age of Camelot"],
+            ["drive_c", "Program Files", "Electronic Arts", "Dark Age of Camelot"]
+    ];
 
     private void AddIfValid(List<UiInstall> found, string? root, InstallSource source)
     {
@@ -74,7 +65,7 @@ public sealed class PlatformInstallLocator : IInstallLocator
             return;
         }
 
-        var install = BuildInstall(root, source);
+        var install = this.BuildInstall(root, source);
         if (install is not null)
         {
             found.Add(install);
@@ -83,26 +74,26 @@ public sealed class PlatformInstallLocator : IInstallLocator
 
     private UiInstall? BuildInstall(string root, InstallSource source)
     {
-        var camelotExe = _fileSystem.Path.Combine(root, "camelot.exe");
-        var uiDir = _fileSystem.Path.Combine(root, "ui");
-        if (!_fileSystem.File.Exists(camelotExe) || !_fileSystem.Directory.Exists(uiDir))
+        var camelotExe = fileSystem.Path.Combine(root, "camelot.exe");
+        var uiDir = fileSystem.Path.Combine(root, "ui");
+        if (!fileSystem.File.Exists(camelotExe) || !fileSystem.Directory.Exists(uiDir))
         {
             return null;
         }
 
-        var customPath = _fileSystem.Path.Combine(uiDir, "custom");
-        var server = DetectServer(root);
+        var customPath = fileSystem.Path.Combine(uiDir, "custom");
+        var server = this.DetectServer(root);
         return new UiInstall(root, customPath, source, server);
     }
 
     private ServerKind DetectServer(string root)
     {
-        if (_fileSystem.File.Exists(_fileSystem.Path.Combine(root, "eden.dll")))
+        if (fileSystem.File.Exists(fileSystem.Path.Combine(root, "eden.dll")))
         {
             return ServerKind.Eden;
         }
 
-        if (_fileSystem.File.Exists(_fileSystem.Path.Combine(root, "btui_game_bridge.dll")))
+        if (fileSystem.File.Exists(fileSystem.Path.Combine(root, "btui_game_bridge.dll")))
         {
             return ServerKind.Blackthorn;
         }
@@ -112,72 +103,71 @@ public sealed class PlatformInstallLocator : IInstallLocator
 
     private string ResolveRoot(string path)
     {
-        var trimmed = _fileSystem.Path.TrimEndingDirectorySeparator(path);
-        var name = _fileSystem.Path.GetFileName(trimmed);
+        var trimmed = fileSystem.Path.TrimEndingDirectorySeparator(path);
+        var name = fileSystem.Path.GetFileName(trimmed);
         if (!string.Equals(name, "custom", StringComparison.OrdinalIgnoreCase))
         {
             return trimmed;
         }
 
-        var uiDir = _fileSystem.Path.GetDirectoryName(trimmed);
-        if (string.IsNullOrEmpty(uiDir) || !string.Equals(_fileSystem.Path.GetFileName(uiDir), "ui", StringComparison.OrdinalIgnoreCase))
+        var uiDir = fileSystem.Path.GetDirectoryName(trimmed);
+        if (string.IsNullOrEmpty(uiDir) || !string.Equals(fileSystem.Path.GetFileName(uiDir), "ui", StringComparison.OrdinalIgnoreCase))
         {
             return trimmed;
         }
 
-        return _fileSystem.Path.GetDirectoryName(uiDir) ?? trimmed;
+        return fileSystem.Path.GetDirectoryName(uiDir) ?? trimmed;
     }
 
     private string? EdenConfigPath() =>
-        _environment.IsWindows
-            ? CombineIfNotNull(_environment.AppData, "eden-launcher", "config.json")
-            : CombineIfNotNull(_environment.Home, ".config", "eden-launcher", "config.json");
+            environment.IsWindows
+            ? this.CombineIfNotNull(environment.AppData, "eden-launcher", "config.json")
+            : this.CombineIfNotNull(environment.Home, ".config", "eden-launcher", "config.json");
 
     private string? BlackthornConfigPath() =>
-        _environment.IsWindows
-            ? CombineIfNotNull(_environment.AppData, "bt-launcher", "config.json")
-            : CombineIfNotNull(_environment.Home, ".config", "bt-launcher", "config.json");
+            environment.IsWindows
+            ? this.CombineIfNotNull(environment.AppData, "bt-launcher", "config.json")
+            : this.CombineIfNotNull(environment.Home, ".config", "bt-launcher", "config.json");
 
-    private string? EdenLauncherCandidate() => ReadPathKey(EdenConfigPath(), "gameDir");
+    private string? EdenLauncherCandidate() => this.ReadPathKey(this.EdenConfigPath(), "gameDir");
 
-    private string? BlackthornLauncherCandidate() => ReadPathKey(BlackthornConfigPath(), "gamePath");
+    private string? BlackthornLauncherCandidate() => this.ReadPathKey(this.BlackthornConfigPath(), "gamePath");
 
     private IEnumerable<string> EdenPrefixCandidates()
     {
-        var configPath = EdenConfigPath();
+        var configPath = this.EdenConfigPath();
 
-        var winePrefix = ReadPathKey(configPath, "winePrefix");
+        var winePrefix = this.ReadPathKey(configPath, "winePrefix");
         if (winePrefix is not null)
         {
             yield return winePrefix;
         }
 
-        var protonPrefix = ReadPathKey(configPath, "protonPrefix");
+        var protonPrefix = this.ReadPathKey(configPath, "protonPrefix");
         if (protonPrefix is not null)
         {
             yield return protonPrefix;
         }
 
-        var protonSteamPath = ReadPathKey(configPath, "protonSteamPath");
+        var protonSteamPath = this.ReadPathKey(configPath, "protonSteamPath");
         if (protonSteamPath is not null)
         {
-            yield return _fileSystem.Path.Combine(protonSteamPath, "steamapps", "compatdata");
+            yield return fileSystem.Path.Combine(protonSteamPath, "steamapps", "compatdata");
         }
     }
 
-    private string? BlackthornPrefixCandidate() =>
-        ReadNestedPathKey(BlackthornConfigPath(), "uiOptions", "linuxWinePrefix");
+    private string? BlackthornPrefixCandidate() => this.ReadNestedPathKey(this.BlackthornConfigPath(), "uiOptions", "linuxWinePrefix");
 
     private string? ReadPathKey(string? configPath, string key)
     {
-        if (string.IsNullOrEmpty(configPath) || !_fileSystem.File.Exists(configPath))
+        if (string.IsNullOrEmpty(configPath) || !fileSystem.File.Exists(configPath))
         {
             return null;
         }
 
         try
         {
-            using var stream = _fileSystem.File.OpenRead(configPath);
+            using var stream = fileSystem.File.OpenRead(configPath);
             using var document = JsonDocument.Parse(stream);
             if (document.RootElement.ValueKind != JsonValueKind.Object)
             {
@@ -204,14 +194,14 @@ public sealed class PlatformInstallLocator : IInstallLocator
 
     private string? ReadNestedPathKey(string? configPath, string objectKey, string key)
     {
-        if (string.IsNullOrEmpty(configPath) || !_fileSystem.File.Exists(configPath))
+        if (string.IsNullOrEmpty(configPath) || !fileSystem.File.Exists(configPath))
         {
             return null;
         }
 
         try
         {
-            using var stream = _fileSystem.File.OpenRead(configPath);
+            using var stream = fileSystem.File.OpenRead(configPath);
             using var document = JsonDocument.Parse(stream);
             if (document.RootElement.ValueKind != JsonValueKind.Object)
             {
@@ -243,31 +233,31 @@ public sealed class PlatformInstallLocator : IInstallLocator
 
     private IEnumerable<string> WinePrefixCandidates()
     {
-        if (_environment.IsWindows)
+        if (environment.IsWindows)
         {
             yield break;
         }
 
         var prefixes = new List<string>();
-        prefixes.AddRange(EdenPrefixCandidates());
+        prefixes.AddRange(this.EdenPrefixCandidates());
 
-        var blackthornPrefix = BlackthornPrefixCandidate();
+        var blackthornPrefix = this.BlackthornPrefixCandidate();
         if (blackthornPrefix is not null)
         {
             prefixes.Add(blackthornPrefix);
         }
 
-        if (!string.IsNullOrEmpty(_environment.Home))
+        if (!string.IsNullOrEmpty(environment.Home))
         {
-            prefixes.Add(_fileSystem.Path.Combine(_environment.Home, ".wine"));
-            prefixes.Add(_fileSystem.Path.Combine(_environment.Home, ".steam", "steam", "steamapps", "compatdata"));
-            prefixes.Add(_fileSystem.Path.Combine(_environment.Home, ".local", "share", "Steam", "steamapps", "compatdata"));
-            prefixes.Add(_fileSystem.Path.Combine(_environment.Home, ".var", "app", "com.valvesoftware.Steam", "data", "Steam", "steamapps", "compatdata"));
+            prefixes.Add(fileSystem.Path.Combine(environment.Home, ".wine"));
+            prefixes.Add(fileSystem.Path.Combine(environment.Home, ".steam", "steam", "steamapps", "compatdata"));
+            prefixes.Add(fileSystem.Path.Combine(environment.Home, ".local", "share", "Steam", "steamapps", "compatdata"));
+            prefixes.Add(fileSystem.Path.Combine(environment.Home, ".var", "app", "com.valvesoftware.Steam", "data", "Steam", "steamapps", "compatdata"));
         }
 
         foreach (var expanded in prefixes
-                     .Where(p => _fileSystem.Directory.Exists(p))
-                     .SelectMany(ExpandCompatDataPrefixes)
+                     .Where(p => fileSystem.Directory.Exists(p))
+                     .SelectMany(this.ExpandCompatDataPrefixes)
                      .Distinct())
         {
             yield return expanded;
@@ -285,7 +275,7 @@ public sealed class PlatformInstallLocator : IInstallLocator
         string[] appDirs;
         try
         {
-            appDirs = _fileSystem.Directory.GetDirectories(prefix);
+            appDirs = fileSystem.Directory.GetDirectories(prefix);
         }
         catch (JsonException)
         {
@@ -302,8 +292,8 @@ public sealed class PlatformInstallLocator : IInstallLocator
 
         foreach (var appDir in appDirs)
         {
-            var pfx = _fileSystem.Path.Combine(appDir, "pfx");
-            if (_fileSystem.Directory.Exists(pfx))
+            var pfx = fileSystem.Path.Combine(appDir, "pfx");
+            if (fileSystem.Directory.Exists(pfx))
             {
                 yield return pfx;
             }
@@ -311,13 +301,13 @@ public sealed class PlatformInstallLocator : IInstallLocator
     }
 
     private string? CombineIfNotNull(string? basePath, params string[] parts) =>
-        string.IsNullOrEmpty(basePath) ? null : _fileSystem.Path.Combine(new[] { basePath }.Concat(parts).ToArray());
+        string.IsNullOrEmpty(basePath) ? null : fileSystem.Path.Combine(new[] { basePath }.Concat(parts).ToArray());
 
     private string Normalize(string path)
     {
         try
         {
-            return _fileSystem.Path.GetFullPath(path).TrimEnd('\\', '/').ToLowerInvariant();
+            return fileSystem.Path.GetFullPath(path).TrimEnd('\\', '/').ToLowerInvariant();
         }
         catch (Exception)
         {

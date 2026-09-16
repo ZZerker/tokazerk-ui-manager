@@ -6,23 +6,16 @@ using TokaZerkUIConfig.Domain.Ports;
 
 namespace TokaZerkUIConfig.Infrastructure;
 
-public sealed class AssetsXmlFontStore : IFontDefinitionStore
+public sealed class AssetsXmlFontStore(IFileSystem fileSystem) : IFontDefinitionStore
 {
     private static readonly IReadOnlyDictionary<string, Regex> DefinitionRegexes =
         Enum.GetValues<FontTier>()
             .SelectMany(FontTierInfo.DefinitionNames)
             .ToDictionary(name => name, BuildDefinitionRegex);
 
-    private readonly IFileSystem _fileSystem;
-
-    public AssetsXmlFontStore(IFileSystem fileSystem)
-    {
-        _fileSystem = fileSystem;
-    }
-
     public async Task<FontSettings> ReadAsync(string customPath, CancellationToken ct)
     {
-        var text = await ReadTextAsync(customPath, ct).ConfigureAwait(false);
+        var text = await this.ReadTextAsync(customPath, ct).ConfigureAwait(false);
 
         var missing = new List<string>();
         var settings = FontSettings.Default;
@@ -50,7 +43,7 @@ public sealed class AssetsXmlFontStore : IFontDefinitionStore
 
     public async Task WriteAsync(string customPath, FontSettings settings, CancellationToken ct)
     {
-        var text = await ReadTextAsync(customPath, ct).ConfigureAwait(false);
+        var text = await this.ReadTextAsync(customPath, ct).ConfigureAwait(false);
 
         var missing = new List<string>();
 
@@ -80,21 +73,21 @@ public sealed class AssetsXmlFontStore : IFontDefinitionStore
             throw new FontDefinitionsNotFoundException(missing);
         }
 
-        var path = AssetsXmlPath(customPath);
+        var path = this.AssetsXmlPath(customPath);
         var tempPath = path + ".tmp";
         var bytes = Encoding.Latin1.GetBytes(text);
-        await _fileSystem.File.WriteAllBytesAsync(tempPath, bytes, ct).ConfigureAwait(false);
-        _fileSystem.File.Move(tempPath, path, overwrite: true);
+        await fileSystem.File.WriteAllBytesAsync(tempPath, bytes, ct).ConfigureAwait(false);
+        fileSystem.File.Move(tempPath, path, overwrite: true);
     }
 
     private async Task<string> ReadTextAsync(string customPath, CancellationToken ct)
     {
-        var path = AssetsXmlPath(customPath);
-        var bytes = await _fileSystem.File.ReadAllBytesAsync(path, ct).ConfigureAwait(false);
+        var path = this.AssetsXmlPath(customPath);
+        var bytes = await fileSystem.File.ReadAllBytesAsync(path, ct).ConfigureAwait(false);
         return Encoding.Latin1.GetString(bytes);
     }
 
-    private string AssetsXmlPath(string customPath) => _fileSystem.Path.Combine(customPath, "assets.xml");
+    private string AssetsXmlPath(string customPath) => fileSystem.Path.Combine(customPath, "assets.xml");
 
     // Regex is built per name (escapedName is not a compile-time constant), so it cannot use
     // [GeneratedRegex]; the pattern captures prefix/height/suffix so writes touch only the digits.

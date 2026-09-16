@@ -6,7 +6,7 @@ namespace TokaZerkUIConfig.Infrastructure;
 [JsonSourceGenerationOptions(
     WriteIndented = true,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
-    Converters = new[] { typeof(SemVerJsonConverter) })]
+    Converters = [typeof(SemVerJsonConverter)])]
 [JsonSerializable(typeof(UiSettings))]
 internal partial class SettingsJsonContext : JsonSerializerContext
 {

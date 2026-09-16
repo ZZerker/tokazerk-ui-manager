@@ -19,7 +19,7 @@ internal static class RealPackageLocator
     }
 }
 
-public sealed class RealPackageFactAttribute: FactAttribute
+public sealed class RealPackageFactAttribute : FactAttribute
 {
     public RealPackageFactAttribute()
     {
@@ -30,7 +30,7 @@ public sealed class RealPackageFactAttribute: FactAttribute
     }
 }
 
-public sealed class RealPackageTheoryAttribute: TheoryAttribute
+public sealed class RealPackageTheoryAttribute : TheoryAttribute
 {
     public RealPackageTheoryAttribute()
     {

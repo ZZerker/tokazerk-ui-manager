@@ -29,7 +29,7 @@ public class PlatformInstallLocatorTests
 
         var installs = await locator.DetectAsync(CancellationToken.None);
 
-        Assert.Contains(installs, i => i.Source == InstallSource.EdenLauncher && i.Server == ServerKind.Eden);
+        Assert.Contains(installs, i => i is { Source: InstallSource.EdenLauncher, Server: ServerKind.Eden });
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class PlatformInstallLocatorTests
 
         var installs = await locator.DetectAsync(CancellationToken.None);
 
-        Assert.Contains(installs, i => i.Source == InstallSource.BlackthornLauncher && i.Server == ServerKind.Blackthorn);
+        Assert.Contains(installs, i => i is { Source: InstallSource.BlackthornLauncher, Server: ServerKind.Blackthorn });
     }
 
     [Fact]
