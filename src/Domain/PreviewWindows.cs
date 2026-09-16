@@ -6,12 +6,14 @@ public static class PreviewWindows
 {
     public static IReadOnlyList<PreviewWindow> All { get; } =
     [
-        new PreviewWindow("Main", "new_summary_window"),
-        new PreviewWindow("Group", "stats_group"),
-        new PreviewWindow("Group v2", "new_group_window"),
+        new PreviewWindow("Main", "summary"),
+        new PreviewWindow("Main (new)", "new_summary_window"),
+        new PreviewWindow("Group", "new_group_window"),
         new PreviewWindow("Target", "custom2_window"),
         new PreviewWindow("Chat", "chat"),
         new PreviewWindow("Mini stats", "custom6_window"),
         new PreviewWindow("Mini resists", "custom15_window"),
+        new PreviewWindow("Attributes", "stats_attributes"),
+        new PreviewWindow("Quest journal", "new_quest_journal"),
     ];
 }
