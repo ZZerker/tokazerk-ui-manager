@@ -7,13 +7,20 @@ namespace TokaZerkUIConfig.Infrastructure.Tests;
 
 public class PlatformInstallLocatorTests
 {
-    private static void AddInstall(MockFileSystem fileSystem, string root, string? marker = "eden.dll")
+    // The marker DLL no longer determines the detected server (the launcher config does), but the
+    // helper still drops it in the folder to model what a real install (or a cloned one) looks like.
+    private static void AddInstall(MockFileSystem fileSystem, string root, string? marker = "eden.dll", string? extraMarker = null)
     {
         fileSystem.AddFile(fileSystem.Path.Combine(root, "camelot.exe"), new MockFileData("exe"));
         fileSystem.AddDirectory(fileSystem.Path.Combine(root, "ui"));
         if (marker is not null)
         {
             fileSystem.AddFile(fileSystem.Path.Combine(root, marker), new MockFileData("dll"));
+        }
+
+        if (extraMarker is not null)
+        {
+            fileSystem.AddFile(fileSystem.Path.Combine(root, extraMarker), new MockFileData("dll"));
         }
     }
 
@@ -37,7 +44,8 @@ public class PlatformInstallLocatorTests
     {
         var fileSystem = new MockFileSystem();
         var root = @"C:\Games\BT DAoC";
-        AddInstall(fileSystem, root, marker: "btui_game_bridge.dll");
+        // Cloned folder: carries eden.dll too, but the Blackthorn launcher config is the source of truth.
+        AddInstall(fileSystem, root, marker: "btui_game_bridge.dll", extraMarker: "eden.dll");
         fileSystem.AddFile(@"C:\AppData\bt-launcher\config.json", new MockFileData("""{"gamePath":"C:/Games/BT DAoC"}"""));
         var environment = new LocatorEnvironment(@"C:\AppData", null, null, null, IsWindows: true);
         var locator = new PlatformInstallLocator(fileSystem, environment);
@@ -45,6 +53,20 @@ public class PlatformInstallLocatorTests
         var installs = await locator.DetectAsync(CancellationToken.None);
 
         Assert.Contains(installs, i => i is { Source: InstallSource.BlackthornLauncher, Server: ServerKind.Blackthorn });
+    }
+
+    [Fact]
+    public void Validate_ReturnsBlackthorn_WhenFolderContainsBothDlls()
+    {
+        var fileSystem = new MockFileSystem();
+        var root = @"C:\Games\Ambiguous DAoC";
+        AddInstall(fileSystem, root, marker: "btui_game_bridge.dll", extraMarker: "eden.dll");
+        var locator = new PlatformInstallLocator(fileSystem, new LocatorEnvironment(null, null, null, null, IsWindows: true));
+
+        var install = locator.Validate(root);
+
+        Assert.NotNull(install);
+        Assert.Equal(ServerKind.Blackthorn, install!.Server);
     }
 
     [Fact]
@@ -155,6 +177,23 @@ public class PlatformInstallLocatorTests
         var locator = new PlatformInstallLocator(fileSystem, new LocatorEnvironment(null, null, null, null, IsWindows: true));
 
         var install = locator.Validate(fileSystem.Path.Combine(root, "ui", "custom"));
+
+        Assert.NotNull(install);
+        Assert.Equal(root, install!.GameRoot);
+    }
+
+    [Fact]
+    public void Validate_AcceptsMixedSeparatorRoot_AndNormalizesGameRoot()
+    {
+        var fileSystem = new MockFileSystem();
+        var root = @"C:\Games\Eden DAoC";
+        AddInstall(fileSystem, root);
+        var locator = new PlatformInstallLocator(fileSystem, new LocatorEnvironment(null, null, null, null, IsWindows: true));
+
+        // Mixed separators, as a launcher config might supply them (e.g. "C:/Spiele/Blackthorn DAoC\ui\custom").
+        var mixedRoot = @"C:/Games\Eden DAoC";
+
+        var install = locator.Validate(mixedRoot);
 
         Assert.NotNull(install);
         Assert.Equal(root, install!.GameRoot);

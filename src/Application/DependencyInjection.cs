@@ -7,6 +7,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddTransient<DetectInstalls>();
+        services.AddTransient<ValidateInstall>();
         services.AddTransient<LoadCurrentState>();
         services.AddTransient<ApplyFontSettings>();
         services.AddTransient<ApplyVariant>();

@@ -74,28 +74,39 @@ public sealed class PlatformInstallLocator(IFileSystem fileSystem, LocatorEnviro
 
     private UiInstall? BuildInstall(string root, InstallSource source)
     {
-        var camelotExe = fileSystem.Path.Combine(root, "camelot.exe");
-        var uiDir = fileSystem.Path.Combine(root, "ui");
+        // Normalize a launcher-supplied root (which may mix separators, e.g. "C:/Spiele/Blackthorn DAoC\ui\custom")
+        // so the stored GameRoot is comparable and displayable in normal form.
+        var fullRoot = fileSystem.Path.GetFullPath(root);
+        var camelotExe = fileSystem.Path.Combine(fullRoot, "camelot.exe");
+        var uiDir = fileSystem.Path.Combine(fullRoot, "ui");
         if (!fileSystem.File.Exists(camelotExe) || !fileSystem.Directory.Exists(uiDir))
         {
             return null;
         }
 
         var customPath = fileSystem.Path.Combine(uiDir, "custom");
-        var server = this.DetectServer(root);
-        return new UiInstall(root, customPath, source, server);
+        // Players clone one game folder to make the other server's client, so the launcher config
+        // that pointed at this root outranks the DLLs; those only decide when no launcher did.
+        var server = source switch
+        {
+            InstallSource.EdenLauncher => ServerKind.Eden,
+            InstallSource.BlackthornLauncher => ServerKind.Blackthorn,
+            _ => this.DetectServer(fullRoot)
+        };
+        return new UiInstall(fullRoot, customPath, source, server);
     }
 
     private ServerKind DetectServer(string root)
     {
-        if (fileSystem.File.Exists(fileSystem.Path.Combine(root, "eden.dll")))
-        {
-            return ServerKind.Eden;
-        }
-
+        // A Blackthorn folder is an Eden client plus the bridge, so the bridge is checked first.
         if (fileSystem.File.Exists(fileSystem.Path.Combine(root, "btui_game_bridge.dll")))
         {
             return ServerKind.Blackthorn;
+        }
+
+        if (fileSystem.File.Exists(fileSystem.Path.Combine(root, "eden.dll")))
+        {
+            return ServerKind.Eden;
         }
 
         return ServerKind.Unknown;

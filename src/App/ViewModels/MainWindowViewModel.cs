@@ -11,7 +11,6 @@ public partial class MainWindowViewModel(
     FontsViewModel fonts,
     WindowsViewModel windows,
     UpdatesViewModel updates,
-    DetectInstalls detectInstalls,
     LoadCurrentState loadCurrentState,
     ApplyVariant applyVariant) : ObservableObject
 {
@@ -38,18 +37,13 @@ public partial class MainWindowViewModel(
     {
         this.SubscribeToSelectionChanges();
 
-        // SHORTCUT: the first detected install is used until the Install section (step 10) lets the user pick one.
-        try
-        {
-            var installs = await detectInstalls.ExecuteAsync(ct);
-            this.InstallPath = installs.Count > 0 ? installs[0].CustomPath : null;
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            this.InstallPath = null;
-        }
+        await install.DetectAsync(ct);
+        this.InstallPath = install.SelectedInstall?.CustomPath;
 
-        await this.RefreshSectionsAsync(ct);
+        if (install.SelectedInstall is null)
+        {
+            await this.RefreshSectionsAsync(ct);
+        }
     }
 
     [RelayCommand(CanExecute = nameof(HasUnsavedChanges))]
@@ -115,6 +109,7 @@ public partial class MainWindowViewModel(
 
         maps.SelectionChanged += this.OnSelectionChanged;
         windows.SelectionChanged += this.OnSelectionChanged;
+        install.InstallSelected += this.OnInstallSelected;
         this.selectionEventsSubscribed = true;
     }
 
@@ -122,6 +117,21 @@ public partial class MainWindowViewModel(
     {
         this.selectionRevision++;
         this.HasUnsavedChanges = true;
+    }
+
+    private async void OnInstallSelected(object? sender, EventArgs e)
+    {
+        this.InstallPath = install.SelectedInstall?.CustomPath;
+
+        try
+        {
+            await this.RefreshSectionsAsync(CancellationToken.None);
+            this.HasUnsavedChanges = false;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            install.Error = ex.Message;
+        }
     }
 
     private async Task RefreshSectionsAsync(CancellationToken ct)
@@ -134,6 +144,8 @@ public partial class MainWindowViewModel(
         }
 
         var state = await loadCurrentState.ExecuteAsync(customPath, ct);
+        install.Load(state);
+
         if (state.IdentityError is not null)
         {
             this.DisableConfigurationSections(state.IdentityError);

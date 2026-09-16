@@ -1,10 +1,64 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:TokaZerkUIConfig.App.ViewModels"
+             xmlns:domain="using:TokaZerkUIConfig.Domain"
              x:Class="TokaZerkUIConfig.App.Views.InstallView"
              x:DataType="vm:InstallViewModel">
-  <TextBlock Text="{Binding Title}"
-             FontSize="14"
-             FontWeight="Bold"
-             Margin="16" />
+  <StackPanel Margin="16">
+    <TextBlock Text="{Binding Title}"
+               FontSize="14"
+               FontWeight="Bold"
+               Margin="0,0,0,8" />
+
+    <TextBlock Text="Game installation"
+               Foreground="{DynamicResource TextSecondaryBrush}"
+               Margin="0,0,0,8" />
+
+    <ListBox ItemsSource="{Binding Installs}"
+             SelectedItem="{Binding SelectedInstall}"
+             Height="120">
+      <ListBox.ItemTemplate>
+        <DataTemplate DataType="domain:UiInstall">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="{Binding GameRoot}" />
+            <TextBlock Text="{Binding Server}"
+                       IsVisible="{Binding Server, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter={x:Static domain:ServerKind.Unknown}}"
+                       FontSize="11"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       Margin="8,0,0,0" />
+          </StackPanel>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <Button Content="Browse..."
+            Command="{Binding BrowseCommand}"
+            HorizontalAlignment="Left"
+            Margin="0,8,0,0" />
+
+    <TextBlock Text="{Binding Error}"
+               IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}"
+               TextWrapping="Wrap"
+               Foreground="#E06C6C"
+               Margin="0,8,0,0" />
+
+    <TextBlock Text="Installed UI"
+               Foreground="{DynamicResource TextSecondaryBrush}"
+               Margin="0,16,0,4" />
+    <TextBlock Text="{Binding InstalledUiText}" />
+
+    <Button Content="Install TokaZerk UI"
+            IsVisible="{Binding ShowInstallOffer}"
+            IsEnabled="False"
+            ToolTip.Tip="Available with the Updates section"
+            HorizontalAlignment="Left"
+            Margin="0,8,0,0" />
+
+    <TextBlock Text="The UI currently in ui/custom is zipped to ui/backups before anything is replaced."
+               IsVisible="{Binding ShowZipNotice}"
+               FontSize="11"
+               Foreground="{DynamicResource TextSecondaryBrush}"
+               TextWrapping="Wrap"
+               Margin="0,4,0,0" />
+  </StackPanel>
 </UserControl>
