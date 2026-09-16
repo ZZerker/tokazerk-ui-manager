@@ -81,7 +81,7 @@ public class JsonSettingsRepositoryTests
     }
 
     [Fact]
-    public async Task LoadAsync_IgnoresLegacyInstalledUiVersion()
+    public async Task LoadAsyncIgnoresLegacyToolConfigProperties()
     {
         var fileSystem = new MockFileSystem();
         fileSystem.AddDirectory("custom/tokazerk_config");
@@ -89,7 +89,7 @@ public class JsonSettingsRepositoryTests
             "custom/tokazerk_config/settings.json",
             new MockFileData(
                 """
-                {"fonts":{"small":10,"medium":11,"large":14,"xLarge":14,"chatSmall":10,"chatLarge":13},"variants":{"mapSize":"large","targetWindow":"default","floatTarget":"default"},"installedUiVersion":"1.0.11","checkForUpdatesOnStart":false}
+                {"fonts":{"small":10,"medium":11,"large":14,"xLarge":14,"chatSmall":10,"chatLarge":13},"variants":{"mapSize":"large","targetWindow":"default","floatTarget":"default"},"checkForUpdatesOnStart":false,"updateChannel":"Beta"}
                 """));
         var repository = new JsonSettingsRepository(fileSystem);
 
@@ -98,6 +98,5 @@ public class JsonSettingsRepositoryTests
         Assert.NotNull(settings);
         Assert.Equal(14, settings!.Fonts.Large);
         Assert.Equal("large", settings.Variants.MapSize);
-        Assert.False(settings.CheckForUpdatesOnStart);
     }
 }

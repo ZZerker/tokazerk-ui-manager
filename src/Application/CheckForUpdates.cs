@@ -3,14 +3,12 @@ using TokaZerkUIConfig.Domain.Ports;
 
 namespace TokaZerkUIConfig.Application;
 
-public sealed class CheckForUpdates(IReleaseSource releaseSource, IInstalledUiReader installedUiReader, ISettingsRepository settingsRepository)
+public sealed class CheckForUpdates(IReleaseSource releaseSource, IInstalledUiReader installedUiReader, IToolConfigStore toolConfigStore)
 {
     public async Task<UpdateCheck> ExecuteAsync(string? customPath, SemVer toolVersion, string rid, CancellationToken ct)
     {
-        var channel = customPath is null
-            ? UpdateChannel.Stable
-            : (await settingsRepository.LoadAsync(customPath, ct).ConfigureAwait(false) ?? UiSettings.Default).UpdateChannel;
-        var includePreReleases = channel == UpdateChannel.Beta;
+        var toolConfig = await toolConfigStore.LoadAsync(ct).ConfigureAwait(false);
+        var includePreReleases = toolConfig.UpdateChannel == UpdateChannel.Beta;
 
         SemVer? installedUiVersion = null;
         if (customPath is not null)

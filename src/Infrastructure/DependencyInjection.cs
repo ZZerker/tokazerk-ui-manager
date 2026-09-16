@@ -16,6 +16,7 @@ public static class DependencyInjection
 
         services.AddSingleton<IFontDefinitionStore, AssetsXmlFontStore>();
         services.AddSingleton<ISettingsRepository, JsonSettingsRepository>();
+        services.AddSingleton<IToolConfigStore, JsonToolConfigStore>();
         services.AddSingleton<IBackupStore, FolderBackupStore>();
         services.AddSingleton<IVariantStore, FileVariantStore>();
         services.AddSingleton<IInstallLocator, PlatformInstallLocator>();

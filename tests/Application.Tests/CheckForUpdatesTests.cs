@@ -6,16 +6,16 @@ namespace TokaZerkUIConfig.Application.Tests;
 public class CheckForUpdatesTests
 {
     [Fact]
-    public async Task BetaChannelInSettingsRequestsPreReleases()
+    public async Task BetaChannelInToolConfigRequestsPreReleasesWhenCustomPathIsNull()
     {
         var releaseSource = new StubReleaseSource();
         var installedUiReader = new StubInstalledUiReader();
-        var settingsRepository = new StubSettingsRepository { Stored = UiSettings.Default with { UpdateChannel = UpdateChannel.Beta } };
-        var useCase = new CheckForUpdates(releaseSource, installedUiReader, settingsRepository);
+        var toolConfigStore = new StubToolConfigStore { Stored = new ToolConfig(UpdateChannel.Beta) };
+        var useCase = new CheckForUpdates(releaseSource, installedUiReader, toolConfigStore);
 
-        await useCase.ExecuteAsync("custom", new SemVer(1, 0, 0), "win-x64", CancellationToken.None);
+        await useCase.ExecuteAsync(null, new SemVer(1, 0, 0), "win-x64", CancellationToken.None);
 
-        Assert.True(releaseSource.IncludePreReleasesRequested);
+        Assert.Equal(new[] { true, true }, releaseSource.IncludePreReleaseRequests);
     }
 
     [Fact]
@@ -25,8 +25,8 @@ public class CheckForUpdatesTests
         releaseSource.ReleaseByRepo[ReleaseRepositories.UI_REPO] =
             new ReleaseInfo(new SemVer(1, 0, 12), "v1.0.12", "TokaZerkUI-v1.0.12.zip", "https://example.test/ui.zip", "");
         var installedUiReader = new StubInstalledUiReader { InstalledUi = new InstalledUi(InstalledUiKind.TokaZerk, new SemVer(1, 0, 11)) };
-        var settingsRepository = new StubSettingsRepository { Stored = UiSettings.Default };
-        var useCase = new CheckForUpdates(releaseSource, installedUiReader, settingsRepository);
+        var toolConfigStore = new StubToolConfigStore();
+        var useCase = new CheckForUpdates(releaseSource, installedUiReader, toolConfigStore);
 
         var check = await useCase.ExecuteAsync("custom", new SemVer(1, 0, 0), "win-x64", CancellationToken.None);
 
@@ -45,8 +45,8 @@ public class CheckForUpdatesTests
         releaseSource.ReleaseByRepo[ReleaseRepositories.TOOL_REPO] =
             new ReleaseInfo(new SemVer(2, 0, 0), "v2.0.0", "TokaZerkUIConfig-win-x64.zip", "https://example.test/tool.zip", "");
         var installedUiReader = new StubInstalledUiReader();
-        var settingsRepository = new StubSettingsRepository { Stored = UiSettings.Default };
-        var useCase = new CheckForUpdates(releaseSource, installedUiReader, settingsRepository);
+        var toolConfigStore = new StubToolConfigStore();
+        var useCase = new CheckForUpdates(releaseSource, installedUiReader, toolConfigStore);
 
         var check = await useCase.ExecuteAsync("custom", new SemVer(1, 0, 0), "win-x64", CancellationToken.None);
 

@@ -55,6 +55,19 @@ internal sealed class StubSettingsRepository : ISettingsRepository
     }
 }
 
+internal sealed class StubToolConfigStore : IToolConfigStore
+{
+    public ToolConfig Stored { get; set; } = ToolConfig.Default;
+
+    public Task<ToolConfig> LoadAsync(CancellationToken ct) => Task.FromResult(this.Stored);
+
+    public Task SaveAsync(ToolConfig config, CancellationToken ct)
+    {
+        this.Stored = config;
+        return Task.CompletedTask;
+    }
+}
+
 internal sealed class StubInstalledUiReader : IInstalledUiReader
 {
     public InstalledUi InstalledUi { get; set; } = new(InstalledUiKind.TokaZerk, new SemVer(1, 0, 12));
@@ -67,11 +80,11 @@ internal sealed class StubReleaseSource : IReleaseSource
     public Dictionary<string, ReleaseInfo?> ReleaseByRepo { get; } = [];
     public List<(string Url, string DestinationFile)> Downloads { get; } = [];
     public List<string> Calls { get; } = [];
-    public bool IncludePreReleasesRequested { get; private set; }
+    public List<bool> IncludePreReleaseRequests { get; } = [];
 
     public Task<ReleaseInfo?> GetLatestAsync(string owner, string repo, bool includePreReleases, Func<string, bool> assetFilter, CancellationToken ct)
     {
-        this.IncludePreReleasesRequested = includePreReleases;
+        this.IncludePreReleaseRequests.Add(includePreReleases);
         return Task.FromResult(this.ReleaseByRepo.GetValueOrDefault(repo));
     }
 
