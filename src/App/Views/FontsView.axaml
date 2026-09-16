@@ -68,14 +68,11 @@
 
       <Grid Grid.Row="1">
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-          <LayoutTransformControl>
-            <LayoutTransformControl.LayoutTransform>
-              <ScaleTransform ScaleX="2" ScaleY="2" />
-            </LayoutTransformControl.LayoutTransform>
-            <Image Source="{Binding Preview}"
-                   Stretch="None"
-                   RenderOptions.BitmapInterpolationMode="None" />
-          </LayoutTransformControl>
+          <Image Source="{Binding Preview}"
+                 Stretch="None"
+                 HorizontalAlignment="Left"
+                 VerticalAlignment="Top"
+                 RenderOptions.BitmapInterpolationMode="None" />
         </ScrollViewer>
 
         <TextBlock Text="Rendering..."
