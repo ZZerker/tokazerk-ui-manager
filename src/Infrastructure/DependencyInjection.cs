@@ -10,6 +10,9 @@ public static class DependencyInjection
     {
         services.AddSingleton<IFileSystem, FileSystem>();
         services.AddSingleton(LocatorEnvironment.Current());
+        // One HttpClient per process avoids socket exhaustion from repeated instantiation.
+        services.AddSingleton<HttpClient>();
+        services.AddSingleton<IReleaseSource, GitHubReleaseSource>();
 
         services.AddSingleton<IFontDefinitionStore, AssetsXmlFontStore>();
         services.AddSingleton<ISettingsRepository, JsonSettingsRepository>();
