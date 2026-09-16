@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddSingleton<IInstallLocator, PlatformInstallLocator>();
         services.AddSingleton<IUiVersionReader, VersionInfoReader>();
         services.AddSingleton<IUiPreviewRenderer, ForgePreviewRenderer>();
+        services.AddSingleton<IMapThumbnailSource, DdsThumbnailSource>();
 
         return services;
     }

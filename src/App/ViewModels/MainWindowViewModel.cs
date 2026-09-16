@@ -1,11 +1,15 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TokaZerkUIConfig.Application;
+using TokaZerkUIConfig.Domain;
 
 namespace TokaZerkUIConfig.App.ViewModels;
 
-public partial class MainWindowViewModel(InstallViewModel install, MapsViewModel maps, FontsViewModel fonts, WindowsViewModel windows, UpdatesViewModel updates, DetectInstalls detectInstalls) : ObservableObject
+public partial class MainWindowViewModel(InstallViewModel install, MapsViewModel maps, FontsViewModel fonts, WindowsViewModel windows, UpdatesViewModel updates, DetectInstalls detectInstalls, ApplyVariant applyVariant) : ObservableObject
 {
+    private int selectionRevision;
+    private bool selectionEventsSubscribed;
+
     [ObservableProperty]
     private SectionViewModel selected = install;
 
@@ -21,6 +25,8 @@ public partial class MainWindowViewModel(InstallViewModel install, MapsViewModel
 
     public async Task InitializeAsync(CancellationToken ct)
     {
+        this.SubscribeToSelectionChanges();
+
         // SHORTCUT: the first detected install is used until the Install section (step 10) lets the user pick one.
         try
         {
@@ -32,16 +38,83 @@ public partial class MainWindowViewModel(InstallViewModel install, MapsViewModel
             this.InstallPath = null;
         }
 
+        await maps.LoadAsync(this.InstallPath, ct);
         await fonts.LoadAsync(this.InstallPath, ct);
+        await windows.LoadAsync(this.InstallPath, ct);
     }
 
     [RelayCommand(CanExecute = nameof(HasUnsavedChanges))]
-    private void Apply()
+    private async Task ApplyAsync(CancellationToken ct)
     {
+        if (this.InstallPath is null)
+        {
+            maps.Error = "No install selected";
+            windows.Error = "No install selected";
+            return;
+        }
+
+        var appliedSelectionRevision = this.selectionRevision;
+        var mapChoiceId = maps.SelectedChoiceId;
+        var targetWindowChoiceId = windows.SelectedTargetWindowId;
+        var floatTargetChoiceId = windows.SelectedFloatTargetId;
+
+        var mapResult = await applyVariant.ExecuteAsync(
+            this.InstallPath,
+            VariantKind.MapSize,
+            mapChoiceId,
+            ct);
+        var targetWindowResult = await applyVariant.ExecuteAsync(
+            this.InstallPath,
+            VariantKind.TargetWindow,
+            targetWindowChoiceId,
+            ct);
+        var floatTargetResult = await applyVariant.ExecuteAsync(
+            this.InstallPath,
+            VariantKind.FloatTarget,
+            floatTargetChoiceId,
+            ct);
+
+        maps.Error = mapResult.Success ? null : mapResult.Error ?? "Could not apply the map size";
+
+        var windowErrors = new[] { targetWindowResult, floatTargetResult }
+            .Where(result => !result.Success)
+            .Select(result => result.Error ?? "Could not apply the window selection");
+        var windowError = string.Join(Environment.NewLine, windowErrors);
+        windows.Error = windowError.Length == 0 ? null : windowError;
+
+        this.HasUnsavedChanges = appliedSelectionRevision != this.selectionRevision
+            || !mapResult.Success
+            || !targetWindowResult.Success
+            || !floatTargetResult.Success;
     }
 
     [RelayCommand(CanExecute = nameof(HasUnsavedChanges))]
-    private void Reset()
+    private async Task ResetAsync(CancellationToken ct)
     {
+        var resetSelectionRevision = this.selectionRevision;
+        await maps.LoadAsync(this.InstallPath, ct);
+        await windows.LoadAsync(this.InstallPath, ct);
+        if (resetSelectionRevision == this.selectionRevision)
+        {
+            this.HasUnsavedChanges = false;
+        }
+    }
+
+    private void SubscribeToSelectionChanges()
+    {
+        if (this.selectionEventsSubscribed)
+        {
+            return;
+        }
+
+        maps.SelectionChanged += this.OnSelectionChanged;
+        windows.SelectionChanged += this.OnSelectionChanged;
+        this.selectionEventsSubscribed = true;
+    }
+
+    private void OnSelectionChanged(object? sender, EventArgs e)
+    {
+        this.selectionRevision++;
+        this.HasUnsavedChanges = true;
     }
 }

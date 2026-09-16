@@ -3,8 +3,58 @@
              xmlns:vm="using:TokaZerkUIConfig.App.ViewModels"
              x:Class="TokaZerkUIConfig.App.Views.MapsView"
              x:DataType="vm:MapsViewModel">
-  <TextBlock Text="{Binding Title}"
-             FontSize="14"
-             FontWeight="Bold"
-             Margin="16" />
+  <StackPanel Margin="16">
+    <TextBlock Text="{Binding Title}"
+               FontSize="14"
+               FontWeight="Bold"
+               Margin="0,0,0,8" />
+
+    <TextBlock Text="Map size"
+               Foreground="{DynamicResource TextSecondaryBrush}"
+               Margin="0,0,0,8" />
+
+    <ItemsControl ItemsSource="{Binding Choices}"
+                  AutomationProperties.Name="Map size">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <StackPanel Orientation="Horizontal" />
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate DataType="vm:VariantChoiceRowViewModel">
+          <StackPanel Width="150" Margin="0,0,12,0">
+            <Border Width="150"
+                    Height="230"
+                    BorderBrush="#1AFFFFFF"
+                    BorderThickness="1">
+              <Image Source="{Binding Thumbnail}"
+                     Stretch="Uniform"
+                     RenderOptions.BitmapInterpolationMode="None" />
+            </Border>
+            <RadioButton Content="{Binding Label}"
+                         GroupName="MapSize"
+                         IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                         Margin="0,8,0,0" />
+            <TextBlock Text="{Binding Error}"
+                       IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}"
+                       TextWrapping="Wrap"
+                       FontSize="11"
+                       Foreground="#E06C6C"
+                       Margin="0,4,0,0" />
+          </StackPanel>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <TextBlock Text="Loading maps..."
+               IsVisible="{Binding IsLoading}"
+               Foreground="{DynamicResource TextSecondaryBrush}"
+               FontSize="11"
+               Margin="0,8,0,0" />
+    <TextBlock Text="{Binding Error}"
+               IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}"
+               TextWrapping="Wrap"
+               Foreground="#E06C6C"
+               Margin="0,8,0,0" />
+  </StackPanel>
 </UserControl>

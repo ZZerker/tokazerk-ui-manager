@@ -3,8 +3,47 @@
              xmlns:vm="using:TokaZerkUIConfig.App.ViewModels"
              x:Class="TokaZerkUIConfig.App.Views.WindowsView"
              x:DataType="vm:WindowsViewModel">
-  <TextBlock Text="{Binding Title}"
-             FontSize="14"
-             FontWeight="Bold"
-             Margin="16" />
+  <StackPanel Margin="16">
+    <TextBlock Text="{Binding Title}"
+               FontSize="14"
+               FontWeight="Bold"
+               Margin="0,0,0,12" />
+
+    <TextBlock Text="Target window"
+               Foreground="{DynamicResource TextSecondaryBrush}"
+               Margin="0,0,0,6" />
+    <ItemsControl ItemsSource="{Binding TargetWindowChoices}"
+                  AutomationProperties.Name="Target window"
+                  Margin="0,0,0,16">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate DataType="vm:VariantChoiceRowViewModel">
+          <RadioButton Content="{Binding Label}"
+                       GroupName="TargetWindow"
+                       IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                       Margin="0,0,0,4" />
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <TextBlock Text="Floating target"
+               Foreground="{DynamicResource TextSecondaryBrush}"
+               Margin="0,0,0,6" />
+    <ItemsControl ItemsSource="{Binding FloatTargetChoices}"
+                  AutomationProperties.Name="Floating target">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate DataType="vm:VariantChoiceRowViewModel">
+          <RadioButton Content="{Binding Label}"
+                       GroupName="FloatTarget"
+                       IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                       Margin="0,0,0,4" />
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <TextBlock Text="{Binding Error}"
+               IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}"
+               TextWrapping="Wrap"
+               Foreground="#E06C6C"
+               Margin="0,12,0,0" />
+  </StackPanel>
 </UserControl>
