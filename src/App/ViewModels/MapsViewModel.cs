@@ -10,15 +10,14 @@ public sealed partial class MapsViewModel : SectionViewModel, IDisposable
 {
     private const string THUMBNAIL_FILE_NAME = "r001.dds";
 
-    private readonly LoadCurrentState loadCurrentState;
     private readonly IMapThumbnailSource thumbnailSource;
     private readonly Variant mapVariant;
     private bool isLoadingSelection;
 
-    public MapsViewModel(LoadCurrentState loadCurrentState, IMapThumbnailSource thumbnailSource)
+    public MapsViewModel(IMapThumbnailSource thumbnailSource)
     {
-        this.loadCurrentState = loadCurrentState;
         this.thumbnailSource = thumbnailSource;
+        this.IsEnabled = false;
         this.mapVariant = VariantTable.Get(VariantKind.MapSize);
         this.Choices = this.mapVariant.Choices
             .Select(choice => new VariantChoiceRowViewModel(choice.Id, choice.Label, this.OnChoiceSelected))
@@ -40,19 +39,10 @@ public sealed partial class MapsViewModel : SectionViewModel, IDisposable
     [ObservableProperty]
     private bool isLoading;
 
-    public async Task LoadAsync(string? customPath, CancellationToken ct)
+    public async Task LoadAsync(string customPath, CurrentState state, CancellationToken ct)
     {
-        if (customPath is null)
-        {
-            this.SelectChoice(VariantChoice.DEFAULT_ID);
-            this.Error = "No install selected";
-            this.ClearThumbnails();
-            return;
-        }
-
-        var state = await this.loadCurrentState.ExecuteAsync(customPath, ct);
         this.SelectChoice(state.Settings.Variants.Get(VariantKind.MapSize));
-        this.Error = state.Error;
+        this.Error = state.SettingsError;
 
         this.IsLoading = true;
         try
@@ -88,11 +78,7 @@ public sealed partial class MapsViewModel : SectionViewModel, IDisposable
             var bitmap = new Bitmap(stream);
             row.ReplaceThumbnail(bitmap);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             row.ReplaceThumbnail(null);
             row.Error = ex.Message;
@@ -130,12 +116,4 @@ public sealed partial class MapsViewModel : SectionViewModel, IDisposable
         }
     }
 
-    private void ClearThumbnails()
-    {
-        foreach (var choice in this.Choices)
-        {
-            choice.ReplaceThumbnail(null);
-            choice.Error = null;
-        }
-    }
 }

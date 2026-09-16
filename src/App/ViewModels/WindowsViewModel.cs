@@ -6,12 +6,11 @@ namespace TokaZerkUIConfig.App.ViewModels;
 
 public sealed partial class WindowsViewModel : SectionViewModel
 {
-    private readonly LoadCurrentState loadCurrentState;
     private bool isLoadingSelection;
 
-    public WindowsViewModel(LoadCurrentState loadCurrentState)
+    public WindowsViewModel()
     {
-        this.loadCurrentState = loadCurrentState;
+        this.IsEnabled = false;
         this.TargetWindowChoices = CreateChoices(VariantKind.TargetWindow, this.OnTargetWindowSelected);
         this.FloatTargetChoices = CreateChoices(VariantKind.FloatTarget, this.OnFloatTargetSelected);
     }
@@ -33,20 +32,11 @@ public sealed partial class WindowsViewModel : SectionViewModel
     [ObservableProperty]
     private string? error;
 
-    public async Task LoadAsync(string? customPath, CancellationToken ct)
+    public void Load(CurrentState state)
     {
-        if (customPath is null)
-        {
-            this.SelectChoice(this.TargetWindowChoices, VariantChoice.DEFAULT_ID);
-            this.SelectChoice(this.FloatTargetChoices, VariantChoice.DEFAULT_ID);
-            this.Error = "No install selected";
-            return;
-        }
-
-        var state = await this.loadCurrentState.ExecuteAsync(customPath, ct);
         this.SelectChoice(this.TargetWindowChoices, state.Settings.Variants.Get(VariantKind.TargetWindow));
         this.SelectChoice(this.FloatTargetChoices, state.Settings.Variants.Get(VariantKind.FloatTarget));
-        this.Error = state.Error;
+        this.Error = state.SettingsError;
     }
 
     private static IReadOnlyList<VariantChoiceRowViewModel> CreateChoices(

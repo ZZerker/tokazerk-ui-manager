@@ -36,8 +36,17 @@ internal sealed class StubVariantStore : IVariantStore
 internal sealed class StubSettingsRepository : ISettingsRepository
 {
     public UiSettings? Stored { get; set; }
+    public Exception? LoadException { get; set; }
 
-    public Task<UiSettings?> LoadAsync(string customPath, CancellationToken ct) => Task.FromResult(this.Stored);
+    public Task<UiSettings?> LoadAsync(string customPath, CancellationToken ct)
+    {
+        if (this.LoadException is not null)
+        {
+            throw this.LoadException;
+        }
+
+        return Task.FromResult(this.Stored);
+    }
 
     public Task SaveAsync(string customPath, UiSettings settings, CancellationToken ct)
     {
@@ -46,9 +55,9 @@ internal sealed class StubSettingsRepository : ISettingsRepository
     }
 }
 
-internal sealed class StubUiVersionReader : IUiVersionReader
+internal sealed class StubInstalledUiReader : IInstalledUiReader
 {
-    public SemVer? Version { get; set; }
+    public InstalledUi InstalledUi { get; set; } = new(InstalledUiKind.TokaZerk, new SemVer(1, 0, 12));
 
-    public Task<SemVer?> ReadAsync(string customPath, CancellationToken ct) => Task.FromResult(this.Version);
+    public Task<InstalledUi> ReadAsync(string customPath, CancellationToken ct) => Task.FromResult(this.InstalledUi);
 }

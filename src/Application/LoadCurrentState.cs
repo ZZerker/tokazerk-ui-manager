@@ -3,44 +3,57 @@ using TokaZerkUIConfig.Domain.Ports;
 
 namespace TokaZerkUIConfig.Application;
 
-public sealed class LoadCurrentState(ISettingsRepository settingsRepository, IFontDefinitionStore fontDefinitionStore, IUiVersionReader uiVersionReader)
+public sealed class LoadCurrentState(
+    ISettingsRepository settingsRepository,
+    IFontDefinitionStore fontDefinitionStore,
+    IInstalledUiReader installedUiReader)
 {
     public async Task<CurrentState> ExecuteAsync(string customPath, CancellationToken ct)
     {
+        InstalledUi installedUi;
+        try
+        {
+            installedUi = await installedUiReader.ReadAsync(customPath, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return new CurrentState(
+                UiSettings.Default,
+                null,
+                new InstalledUi(InstalledUiKind.None, null),
+                null,
+                null,
+                ex.Message);
+        }
+
+        if (installedUi.Kind != InstalledUiKind.TokaZerk)
+        {
+            return new CurrentState(UiSettings.Default, null, installedUi, null, null, null);
+        }
+
         UiSettings settings;
+        string? settingsError = null;
         try
         {
             settings = await settingsRepository.LoadAsync(customPath, ct).ConfigureAwait(false) ?? UiSettings.Default;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return new CurrentState(UiSettings.Default, null, null, ex.Message);
+            settings = UiSettings.Default;
+            settingsError = ex.Message;
         }
 
         FontSettings? fontsInXml = null;
-        string? error = null;
+        string? fontError = null;
         try
         {
             fontsInXml = await fontDefinitionStore.ReadAsync(customPath, ct).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FontDefinitionsNotFoundException)
         {
-            error = ex.Message;
+            fontError = ex.Message;
         }
 
-        var version = settings.InstalledUiVersion;
-        if (version is null)
-        {
-            try
-            {
-                version = await uiVersionReader.ReadAsync(customPath, ct).ConfigureAwait(false);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FontDefinitionsNotFoundException)
-            {
-                error = error is null ? ex.Message : string.Join(Environment.NewLine, error, ex.Message);
-            }
-        }
-
-        return new CurrentState(settings, fontsInXml, version, error);
+        return new CurrentState(settings, fontsInXml, installedUi, settingsError, fontError, null);
     }
 }

@@ -1,6 +1,22 @@
+using System.Text.Json.Serialization;
+
 namespace TokaZerkUIConfig.Domain;
 
-public sealed record UiSettings(FontSettings Fonts, VariantSelection Variants, SemVer? InstalledUiVersion, bool CheckForUpdatesOnStart = true)
+public sealed record UiSettings
 {
-    public static UiSettings Default { get; } = new(FontSettings.Default, new VariantSelection(), null);
+    [JsonConstructor]
+    public UiSettings(FontSettings fonts, VariantSelection variants, bool checkForUpdatesOnStart = true)
+    {
+        this.Fonts = fonts;
+        this.Variants = variants;
+        this.CheckForUpdatesOnStart = checkForUpdatesOnStart;
+    }
+
+    public FontSettings Fonts { get; init; }
+
+    public VariantSelection Variants { get; init; }
+
+    public bool CheckForUpdatesOnStart { get; init; }
+
+    public static UiSettings Default { get; } = new(FontSettings.Default, new VariantSelection());
 }

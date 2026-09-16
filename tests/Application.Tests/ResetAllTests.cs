@@ -12,7 +12,7 @@ public class ResetAllTests
         var variantStore = new StubVariantStore();
         var settingsRepository = new StubSettingsRepository
         {
-            Stored = new UiSettings(FontSettings.Default with { Large = 20 }, new VariantSelection(MapSize: "large"), null),
+            Stored = new UiSettings(FontSettings.Default with { Large = 20 }, new VariantSelection(MapSize: "large")),
         };
         var useCase = new ResetAll(fontStore, variantStore, settingsRepository);
 

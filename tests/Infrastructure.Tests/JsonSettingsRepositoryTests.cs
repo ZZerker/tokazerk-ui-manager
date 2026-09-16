@@ -27,8 +27,7 @@ public class JsonSettingsRepositoryTests
         var repository = new JsonSettingsRepository(fileSystem);
         var settings = new UiSettings(
             FontSettings.Default.With(FontTier.Large, 14),
-            new VariantSelection(MapSize: "large"),
-            new SemVer(1, 0, 11));
+            new VariantSelection(MapSize: "large"));
 
         await repository.SaveAsync("custom", settings, CancellationToken.None);
         var loaded = await repository.LoadAsync("custom", CancellationToken.None);
@@ -79,5 +78,26 @@ public class JsonSettingsRepositoryTests
         var settings = await repository.LoadAsync("custom", CancellationToken.None);
 
         Assert.Null(settings);
+    }
+
+    [Fact]
+    public async Task LoadAsync_IgnoresLegacyInstalledUiVersion()
+    {
+        var fileSystem = new MockFileSystem();
+        fileSystem.AddDirectory("custom/tokazerk_config");
+        fileSystem.AddFile(
+            "custom/tokazerk_config/settings.json",
+            new MockFileData(
+                """
+                {"fonts":{"small":10,"medium":11,"large":14,"xLarge":14,"chatSmall":10,"chatLarge":13},"variants":{"mapSize":"large","targetWindow":"default","floatTarget":"default"},"installedUiVersion":"1.0.11","checkForUpdatesOnStart":false}
+                """));
+        var repository = new JsonSettingsRepository(fileSystem);
+
+        var settings = await repository.LoadAsync("custom", CancellationToken.None);
+
+        Assert.NotNull(settings);
+        Assert.Equal(14, settings!.Fonts.Large);
+        Assert.Equal("large", settings.Variants.MapSize);
+        Assert.False(settings.CheckForUpdatesOnStart);
     }
 }

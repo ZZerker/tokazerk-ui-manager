@@ -5,7 +5,15 @@ using TokaZerkUIConfig.Domain;
 
 namespace TokaZerkUIConfig.App.ViewModels;
 
-public partial class MainWindowViewModel(InstallViewModel install, MapsViewModel maps, FontsViewModel fonts, WindowsViewModel windows, UpdatesViewModel updates, DetectInstalls detectInstalls, ApplyVariant applyVariant) : ObservableObject
+public partial class MainWindowViewModel(
+    InstallViewModel install,
+    MapsViewModel maps,
+    FontsViewModel fonts,
+    WindowsViewModel windows,
+    UpdatesViewModel updates,
+    DetectInstalls detectInstalls,
+    LoadCurrentState loadCurrentState,
+    ApplyVariant applyVariant) : ObservableObject
 {
     private int selectionRevision;
     private bool selectionEventsSubscribed;
@@ -15,6 +23,9 @@ public partial class MainWindowViewModel(InstallViewModel install, MapsViewModel
 
     [ObservableProperty]
     private string? installPath;
+
+    [ObservableProperty]
+    private string statusText = "No custom UI is installed";
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ApplyCommand))]
@@ -38,18 +49,14 @@ public partial class MainWindowViewModel(InstallViewModel install, MapsViewModel
             this.InstallPath = null;
         }
 
-        await maps.LoadAsync(this.InstallPath, ct);
-        await fonts.LoadAsync(this.InstallPath, ct);
-        await windows.LoadAsync(this.InstallPath, ct);
+        await this.RefreshSectionsAsync(ct);
     }
 
     [RelayCommand(CanExecute = nameof(HasUnsavedChanges))]
     private async Task ApplyAsync(CancellationToken ct)
     {
-        if (this.InstallPath is null)
+        if (this.InstallPath is null || !maps.IsEnabled)
         {
-            maps.Error = "No install selected";
-            windows.Error = "No install selected";
             return;
         }
 
@@ -92,9 +99,8 @@ public partial class MainWindowViewModel(InstallViewModel install, MapsViewModel
     private async Task ResetAsync(CancellationToken ct)
     {
         var resetSelectionRevision = this.selectionRevision;
-        await maps.LoadAsync(this.InstallPath, ct);
-        await windows.LoadAsync(this.InstallPath, ct);
-        if (resetSelectionRevision == this.selectionRevision)
+        await this.RefreshSectionsAsync(ct);
+        if (maps.IsEnabled && resetSelectionRevision == this.selectionRevision)
         {
             this.HasUnsavedChanges = false;
         }
@@ -116,5 +122,53 @@ public partial class MainWindowViewModel(InstallViewModel install, MapsViewModel
     {
         this.selectionRevision++;
         this.HasUnsavedChanges = true;
+    }
+
+    private async Task RefreshSectionsAsync(CancellationToken ct)
+    {
+        var customPath = this.InstallPath;
+        if (customPath is null)
+        {
+            this.DisableConfigurationSections("No custom UI is installed");
+            return;
+        }
+
+        var state = await loadCurrentState.ExecuteAsync(customPath, ct);
+        if (state.IdentityError is not null)
+        {
+            this.DisableConfigurationSections(state.IdentityError);
+            return;
+        }
+
+        if (state.InstalledUi.Kind == InstalledUiKind.Other)
+        {
+            this.DisableConfigurationSections("Another UI is installed");
+            return;
+        }
+
+        if (state.InstalledUi.Kind == InstalledUiKind.None)
+        {
+            this.DisableConfigurationSections("No custom UI is installed");
+            return;
+        }
+
+        maps.IsEnabled = true;
+        fonts.IsEnabled = true;
+        windows.IsEnabled = true;
+        this.StatusText = customPath;
+
+        await maps.LoadAsync(customPath, state, ct);
+        fonts.Load(customPath, state);
+        windows.Load(state);
+    }
+
+    private void DisableConfigurationSections(string statusText)
+    {
+        maps.IsEnabled = false;
+        fonts.IsEnabled = false;
+        windows.IsEnabled = false;
+        this.HasUnsavedChanges = false;
+        this.Selected = install;
+        this.StatusText = statusText;
     }
 }

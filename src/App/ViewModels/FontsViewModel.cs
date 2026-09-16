@@ -10,7 +10,6 @@ public sealed partial class FontsViewModel : SectionViewModel
 {
     private const int RENDER_DEBOUNCE_MS = 150;
 
-    private readonly LoadCurrentState loadCurrentState;
     private readonly IUiPreviewRenderer previewRenderer;
     private bool loading;
     private string? loadError;
@@ -18,10 +17,10 @@ public sealed partial class FontsViewModel : SectionViewModel
     private string? renderError;
     private CancellationTokenSource? renderCts;
 
-    public FontsViewModel(LoadCurrentState loadCurrentState, IUiPreviewRenderer previewRenderer)
+    public FontsViewModel(IUiPreviewRenderer previewRenderer)
     {
-        this.loadCurrentState = loadCurrentState;
         this.previewRenderer = previewRenderer;
+        this.IsEnabled = false;
 
         this.Tiers =
         [
@@ -71,19 +70,9 @@ public sealed partial class FontsViewModel : SectionViewModel
         }
     }
 
-    public async Task LoadAsync(string? customPath, CancellationToken ct)
+    public void Load(string customPath, CurrentState state)
     {
         this.CustomPath = customPath;
-
-        if (customPath is null)
-        {
-            this.loadError = "No install selected";
-            this.Error = this.loadError;
-            this.Preview = null;
-            return;
-        }
-
-        var state = await this.loadCurrentState.ExecuteAsync(customPath, ct);
         var fonts = state.FontsInXml ?? state.Settings.Fonts;
 
         this.loading = true;
@@ -94,7 +83,9 @@ public sealed partial class FontsViewModel : SectionViewModel
 
         this.loading = false;
 
-        this.loadError = state.Error;
+        string?[] loadErrors = [state.SettingsError, state.FontError];
+        var loadError = string.Join(Environment.NewLine, loadErrors.Where(error => error is not null));
+        this.loadError = loadError.Length == 0 ? null : loadError;
         this.Validate();
         this.RequestRender();
     }

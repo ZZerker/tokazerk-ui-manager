@@ -16,7 +16,8 @@ public static class DependencyInjection
         services.AddSingleton<IBackupStore, FolderBackupStore>();
         services.AddSingleton<IVariantStore, FileVariantStore>();
         services.AddSingleton<IInstallLocator, PlatformInstallLocator>();
-        services.AddSingleton<IUiVersionReader, VersionInfoReader>();
+        services.AddSingleton<IInstalledUiReader, TokazerkJsonReader>();
+        services.AddSingleton<IUiArchiveStore, ZipUiArchiveStore>();
         services.AddSingleton<IUiPreviewRenderer, ForgePreviewRenderer>();
         services.AddSingleton<IMapThumbnailSource, DdsThumbnailSource>();
 
