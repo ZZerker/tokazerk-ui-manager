@@ -1,10 +1,90 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:TokaZerkUIConfig.App.ViewModels"
+             xmlns:domain="using:TokaZerkUIConfig.Domain"
              x:Class="TokaZerkUIConfig.App.Views.FontsView"
              x:DataType="vm:FontsViewModel">
-  <TextBlock Text="{Binding Title}"
-             FontSize="14"
-             FontWeight="Bold"
-             Margin="16" />
+  <UserControl.Styles>
+    <Style Selector="TextBlock.error">
+      <Setter Property="Foreground" Value="#E06C6C" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid ColumnDefinitions="210,*" Margin="16">
+    <StackPanel Grid.Column="0">
+      <TextBlock Text="{Binding Title}"
+                 FontSize="14"
+                 FontWeight="Bold"
+                 Margin="0,0,0,8" />
+
+      <ItemsControl ItemsSource="{Binding Tiers}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="vm:FontTierRowViewModel">
+            <Grid ColumnDefinitions="80,*" RowDefinitions="Auto,Auto" Margin="0,0,0,6">
+              <TextBlock Grid.Row="0" Grid.Column="0"
+                         Text="{Binding Label}"
+                         VerticalAlignment="Center" />
+              <NumericUpDown Grid.Row="0" Grid.Column="1"
+                              Value="{Binding Value}"
+                              Minimum="{Binding Minimum}"
+                              Maximum="{Binding Maximum}"
+                              Increment="1"
+                              FormatString="0"
+                              ParsingNumberStyle="Integer"
+                              Width="120"
+                              HorizontalAlignment="Left"
+                              ClipValueToMinMax="True" />
+              <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                         Text="{Binding Warning}"
+                         IsVisible="{Binding Warning, Converter={x:Static ObjectConverters.IsNotNull}}"
+                         FontSize="11"
+                         TextWrapping="Wrap"
+                         Foreground="{DynamicResource TextSecondaryBrush}"
+                         Classes.error="{Binding IsError}" />
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <TextBlock Text="{Binding Error}"
+                 IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}"
+                 TextWrapping="Wrap"
+                 Foreground="#E06C6C"
+                 Margin="0,8,0,0" />
+    </StackPanel>
+
+    <Grid Grid.Column="1" Margin="16,0,0,0" RowDefinitions="Auto,*">
+      <ComboBox Grid.Row="0"
+                ItemsSource="{Binding Windows}"
+                SelectedItem="{Binding SelectedWindow}"
+                Width="180"
+                Margin="0,0,0,8">
+        <ComboBox.ItemTemplate>
+          <DataTemplate DataType="domain:PreviewWindow">
+            <TextBlock Text="{Binding Label}" />
+          </DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
+
+      <Grid Grid.Row="1">
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+          <LayoutTransformControl>
+            <LayoutTransformControl.LayoutTransform>
+              <ScaleTransform ScaleX="2" ScaleY="2" />
+            </LayoutTransformControl.LayoutTransform>
+            <Image Source="{Binding Preview}"
+                   Stretch="None"
+                   RenderOptions.BitmapInterpolationMode="None" />
+          </LayoutTransformControl>
+        </ScrollViewer>
+
+        <TextBlock Text="Rendering..."
+                   IsVisible="{Binding IsRendering}"
+                   Foreground="{DynamicResource TextSecondaryBrush}"
+                   FontSize="11"
+                   HorizontalAlignment="Right"
+                   VerticalAlignment="Top" />
+      </Grid>
+    </Grid>
+  </Grid>
 </UserControl>

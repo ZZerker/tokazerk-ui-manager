@@ -28,10 +28,13 @@ public partial class App : Avalonia.Application
 
         if (this.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            var viewModel = Services.GetRequiredService<MainWindowViewModel>();
             desktop.MainWindow = new MainWindow
             {
-                DataContext = Services.GetRequiredService<MainWindowViewModel>()
+                DataContext = viewModel
             };
+
+            desktop.MainWindow.Opened += async (_, _) => await viewModel.InitializeAsync(CancellationToken.None);
 
             desktop.Exit += (_, _) => (Services as IDisposable)?.Dispose();
         }
