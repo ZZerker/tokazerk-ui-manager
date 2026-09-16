@@ -147,7 +147,12 @@ public sealed partial class FontsViewModel : SectionViewModel
         this.RefreshError();
     }
 
-    private void RefreshError() => this.Error = this.loadError ?? this.tierOrderMessage ?? this.renderError;
+    private void RefreshError()
+    {
+        string?[] messages = [this.loadError, this.tierOrderMessage, this.renderError];
+        var text = string.Join(Environment.NewLine, messages.Where(m => m is not null));
+        this.Error = text.Length == 0 ? null : text;
+    }
 
     private void RequestRender()
     {
