@@ -6,23 +6,23 @@ public readonly partial record struct SemVer(int Major, int Minor, int Patch, in
 {
     public int CompareTo(SemVer other)
     {
-        var major = Major.CompareTo(other.Major);
+        var major = this.Major.CompareTo(other.Major);
         if (major != 0)
         {
             return major;
         }
 
-        var minor = Minor.CompareTo(other.Minor);
+        var minor = this.Minor.CompareTo(other.Minor);
         if (minor != 0)
         {
             return minor;
         }
 
-        var patch = Patch.CompareTo(other.Patch);
-        return patch != 0 ? patch : Build.CompareTo(other.Build);
+        var patch = this.Patch.CompareTo(other.Patch);
+        return patch != 0 ? patch : this.Build.CompareTo(other.Build);
     }
 
-    public override string ToString() => Build > 0 ? $"{Major}.{Minor}.{Patch}.{Build}" : $"{Major}.{Minor}.{Patch}";
+    public override string ToString() => this.Build > 0 ? $"{this.Major}.{this.Minor}.{this.Patch}.{this.Build}" : $"{this.Major}.{this.Minor}.{this.Patch}";
 
     public static bool operator <(SemVer left, SemVer right) => left.CompareTo(right) < 0;
     public static bool operator >(SemVer left, SemVer right) => left.CompareTo(right) > 0;

@@ -12,12 +12,12 @@ public sealed record FontSettings(int Small, int Medium, int Large, int XLarge, 
 
     public int Get(FontTier tier) => tier switch
     {
-        FontTier.Small => Small,
-        FontTier.Medium => Medium,
-        FontTier.Large => Large,
-        FontTier.XLarge => XLarge,
-        FontTier.ChatSmall => ChatSmall,
-        FontTier.ChatLarge => ChatLarge,
+        FontTier.Small => this.Small,
+        FontTier.Medium => this.Medium,
+        FontTier.Large => this.Large,
+        FontTier.XLarge => this.XLarge,
+        FontTier.ChatSmall => this.ChatSmall,
+        FontTier.ChatLarge => this.ChatLarge,
         _ => throw new ArgumentOutOfRangeException(nameof(tier)),
     };
 
@@ -36,7 +36,7 @@ public sealed record FontSettings(int Small, int Medium, int Large, int XLarge, 
     {
         var warnings = new List<FontWarning>();
 
-        if (!(Small <= Medium && Medium <= Large && Large <= XLarge))
+        if (!(this.Small <= this.Medium && this.Medium <= this.Large && this.Large <= this.XLarge))
         {
             warnings.Add(new FontWarning(null, FontWarningKind.TierOrder, true,
                 "Font sizes must satisfy Small <= Medium <= Large <= XLarge."));
@@ -44,17 +44,17 @@ public sealed record FontSettings(int Small, int Medium, int Large, int XLarge, 
 
         foreach (var tier in Enum.GetValues<FontTier>())
         {
-            var px = Get(tier);
-            if (px < FontTierInfo.MinPx || px > FontTierInfo.MaxPx)
+            var px = this.Get(tier);
+            if (px < FontTierInfo.MIN_PX || px > FontTierInfo.MAX_PX)
             {
                 warnings.Add(new FontWarning(tier, FontWarningKind.OutOfRange, true,
-                    $"{tier} must be between {FontTierInfo.MinPx} and {FontTierInfo.MaxPx} px."));
+                    $"{tier} must be between {FontTierInfo.MIN_PX} and {FontTierInfo.MAX_PX} px."));
             }
 
-            if (FontTierInfo.HasClippingLimit(tier) && px > FontTierInfo.DefaultPx(tier) + FontTierInfo.ClippingMarginPx)
+            if (FontTierInfo.HasClippingLimit(tier) && px > FontTierInfo.DefaultPx(tier) + FontTierInfo.CLIPPING_MARGIN_PX)
             {
                 warnings.Add(new FontWarning(tier, FontWarningKind.MayClip, false,
-                    $"{tier} above default +{FontTierInfo.ClippingMarginPx}px may clip in fixed label boxes."));
+                    $"{tier} above default +{FontTierInfo.CLIPPING_MARGIN_PX}px may clip in fixed label boxes."));
             }
         }
 

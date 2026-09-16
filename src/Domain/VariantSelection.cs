@@ -1,15 +1,15 @@
 namespace TokaZerkUIConfig.Domain;
 
 public sealed record VariantSelection(
-    string MapSize = VariantChoice.DefaultId,
-    string TargetWindow = VariantChoice.DefaultId,
-    string FloatTarget = VariantChoice.DefaultId)
+    string MapSize = VariantChoice.DEFAULT_ID,
+    string TargetWindow = VariantChoice.DEFAULT_ID,
+    string FloatTarget = VariantChoice.DEFAULT_ID)
 {
     public string Get(VariantKind kind) => kind switch
     {
-        VariantKind.MapSize => MapSize,
-        VariantKind.TargetWindow => TargetWindow,
-        VariantKind.FloatTarget => FloatTarget,
+        VariantKind.MapSize => this.MapSize,
+        VariantKind.TargetWindow => this.TargetWindow,
+        VariantKind.FloatTarget => this.FloatTarget,
         _ => throw new ArgumentOutOfRangeException(nameof(kind)),
     };
 

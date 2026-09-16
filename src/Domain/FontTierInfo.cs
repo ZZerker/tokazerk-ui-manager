@@ -2,9 +2,9 @@ namespace TokaZerkUIConfig.Domain;
 
 public static class FontTierInfo
 {
-    public const int ClippingMarginPx = 2;
-    public const int MinPx = 6;
-    public const int MaxPx = 24;
+    public const int CLIPPING_MARGIN_PX = 2;
+    public const int MIN_PX = 6;
+    public const int MAX_PX = 24;
 
     public static int DefaultPx(FontTier tier) => tier switch
     {
@@ -17,12 +17,12 @@ public static class FontTierInfo
         _ => throw new ArgumentOutOfRangeException(nameof(tier)),
     };
 
-    private static readonly IReadOnlyList<string> SmallNames = new[] { "TokaSmall", "TokaSmallBold" };
-    private static readonly IReadOnlyList<string> MediumNames = new[] { "TokaMedium", "TokaMediumBold" };
-    private static readonly IReadOnlyList<string> LargeNames = new[] { "TokaLarge", "TokaLargeBold" };
-    private static readonly IReadOnlyList<string> XLargeNames = new[] { "TokaXLargeBold" };
-    private static readonly IReadOnlyList<string> ChatSmallNames = new[] { "chat_small" };
-    private static readonly IReadOnlyList<string> ChatLargeNames = new[] { "chat_large" };
+    private static readonly IReadOnlyList<string> SmallNames = ["TokaSmall", "TokaSmallBold"];
+    private static readonly IReadOnlyList<string> MediumNames = ["TokaMedium", "TokaMediumBold"];
+    private static readonly IReadOnlyList<string> LargeNames = ["TokaLarge", "TokaLargeBold"];
+    private static readonly IReadOnlyList<string> XLargeNames = ["TokaXLargeBold"];
+    private static readonly IReadOnlyList<string> ChatSmallNames = ["chat_small"];
+    private static readonly IReadOnlyList<string> ChatLargeNames = ["chat_large"];
 
     public static IReadOnlyList<string> DefinitionNames(FontTier tier) => tier switch
     {

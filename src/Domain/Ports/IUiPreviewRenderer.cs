@@ -8,7 +8,7 @@ public interface IUiPreviewRenderer
     void Invalidate();
 }
 
-public sealed class PreviewWindowNotFoundException(string windowId): Exception($"Preview window not found: {windowId}")
+public sealed class PreviewWindowNotFoundException(string windowId) : Exception($"Preview window not found: {windowId}")
 {
     public string WindowId { get; } = windowId;
 }

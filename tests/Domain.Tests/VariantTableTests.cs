@@ -17,11 +17,11 @@ public class VariantTableTests
         var variant = VariantTable.Get(VariantKind.MapSize);
 
         Assert.Equal("Maps", variant.TargetPath);
-        Assert.Equal(new[] { "Warmap", "regions.dat" }, variant.Preserve);
+        Assert.Equal(["Warmap", "regions.dat"], variant.Preserve);
         Assert.Equal(3, variant.Choices.Count);
-        Assert.Contains(variant.Choices, c => c.Id == "large" && c.SourcePath == "Maps_large");
-        Assert.Contains(variant.Choices, c => c.Id == "small" && c.SourcePath == "Maps_small");
-        Assert.Contains(variant.Choices, c => c.Id == "default" && c.SourcePath == null);
+        Assert.Contains(variant.Choices, c => c is { Id: "large", SourcePath: "Maps_large" });
+        Assert.Contains(variant.Choices, c => c is { Id: "small", SourcePath: "Maps_small" });
+        Assert.Contains(variant.Choices, c => c is { Id: "default", SourcePath: null });
     }
 
     [Fact]
@@ -31,8 +31,8 @@ public class VariantTableTests
 
         Assert.Equal("custom2_window.xml", variant.TargetPath);
         Assert.Empty(variant.Preserve);
-        Assert.Contains(variant.Choices, c => c.Id == "default" && c.SourcePath == "Options/TargetWindow/blue(TokaZerk)/custom2_window.xml" && c.Label == "Blue (TokaZerk)");
-        Assert.Contains(variant.Choices, c => c.Id == "purple" && c.SourcePath == "Options/TargetWindow/purple/custom2_window.xml");
+        Assert.Contains(variant.Choices, c => c is { Id: "default", SourcePath: "Options/TargetWindow/blue(TokaZerk)/custom2_window.xml", Label: "Blue (TokaZerk)" });
+        Assert.Contains(variant.Choices, c => c is { Id: "purple", SourcePath: "Options/TargetWindow/purple/custom2_window.xml" });
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class VariantTableTests
         var variant = VariantTable.Get(VariantKind.FloatTarget);
 
         Assert.Equal("float_target_window.xml", variant.TargetPath);
-        Assert.Contains(variant.Choices, c => c.Id == "default" && c.SourcePath == null);
-        Assert.Contains(variant.Choices, c => c.Id == "hud" && c.SourcePath == "Options/floatTargetWindow/float_target_window.xml");
+        Assert.Contains(variant.Choices, c => c is { Id: "default", SourcePath: null });
+        Assert.Contains(variant.Choices, c => c is { Id: "hud", SourcePath: "Options/floatTargetWindow/float_target_window.xml" });
     }
 }

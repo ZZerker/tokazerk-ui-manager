@@ -7,13 +7,7 @@ public interface IFontDefinitionStore
     Task WriteAsync(string customPath, FontSettings settings, CancellationToken ct);
 }
 
-public sealed class FontDefinitionsNotFoundException : Exception
+public sealed class FontDefinitionsNotFoundException(IReadOnlyList<string> missingNames) : Exception($"Missing font definitions: {string.Join(", ", missingNames)}")
 {
-    public FontDefinitionsNotFoundException(IReadOnlyList<string> missingNames)
-        : base($"Missing font definitions: {string.Join(", ", missingNames)}")
-    {
-        MissingNames = missingNames;
-    }
-
-    public IReadOnlyList<string> MissingNames { get; }
+    public IReadOnlyList<string> MissingNames { get; } = missingNames;
 }

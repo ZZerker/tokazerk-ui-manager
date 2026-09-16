@@ -18,7 +18,7 @@ public class FontSettingsTests
 
         var warnings = settings.Validate();
 
-        Assert.Contains(warnings, w => w.Kind == FontWarningKind.TierOrder && w.IsError);
+        Assert.Contains(warnings, w => w is { Kind: FontWarningKind.TierOrder, IsError: true });
     }
 
     [Theory]
@@ -30,7 +30,7 @@ public class FontSettingsTests
 
         var warnings = settings.Validate();
 
-        var hasClipWarning = warnings.Any(w => w.Tier == FontTier.Large && w.Kind == FontWarningKind.MayClip);
+        var hasClipWarning = warnings.Any(w => w is { Tier: FontTier.Large, Kind: FontWarningKind.MayClip });
         Assert.Equal(expectWarning, hasClipWarning);
     }
 
@@ -41,7 +41,7 @@ public class FontSettingsTests
 
         var warnings = settings.Validate();
 
-        Assert.DoesNotContain(warnings, w => w.Tier == FontTier.ChatLarge && w.Kind == FontWarningKind.MayClip);
+        Assert.DoesNotContain(warnings, w => w is { Tier: FontTier.ChatLarge, Kind: FontWarningKind.MayClip });
     }
 
     [Theory]
@@ -53,7 +53,7 @@ public class FontSettingsTests
 
         var warnings = settings.Validate();
 
-        Assert.Contains(warnings, w => w.Tier == FontTier.Small && w.Kind == FontWarningKind.OutOfRange && w.IsError);
+        Assert.Contains(warnings, w => w is { Tier: FontTier.Small, Kind: FontWarningKind.OutOfRange, IsError: true });
     }
 
     [Fact]
