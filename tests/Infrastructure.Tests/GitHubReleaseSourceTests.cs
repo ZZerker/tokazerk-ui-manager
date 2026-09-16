@@ -20,13 +20,54 @@ public class GitHubReleaseSourceTests
         }
         """;
 
+    private const string ReleaseListJson = """
+        [
+          {
+            "tag_name": "v1.0.12-beta.2",
+            "body": "beta notes",
+            "prerelease": true,
+            "draft": false,
+            "assets": [
+              { "name": "TokaZerkUI-v1.0.12-beta.2.zip", "browser_download_url": "https://example.com/TokaZerkUI-v1.0.12-beta.2.zip" }
+            ]
+          },
+          {
+            "tag_name": "v1.0.11",
+            "body": "stable notes",
+            "prerelease": false,
+            "draft": false,
+            "assets": [
+              { "name": "TokaZerkUI-v1.0.11.zip", "browser_download_url": "https://example.com/TokaZerkUI-v1.0.11.zip" }
+            ]
+          },
+          {
+            "tag_name": "v1.0.13",
+            "body": "draft notes",
+            "prerelease": false,
+            "draft": true,
+            "assets": [
+              { "name": "TokaZerkUI-v1.0.13.zip", "browser_download_url": "https://example.com/TokaZerkUI-v1.0.13.zip" }
+            ]
+          },
+          {
+            "tag_name": "v0.9.0-rc1",
+            "body": "unparsable notes",
+            "prerelease": true,
+            "draft": false,
+            "assets": [
+              { "name": "TokaZerkUI-v0.9.0-rc1.zip", "browser_download_url": "https://example.com/TokaZerkUI-v0.9.0-rc1.zip" }
+            ]
+          }
+        ]
+        """;
+
     [Fact]
     public async Task GetLatestAsyncParsesReleaseJsonAndPicksMatchingAsset()
     {
         var handler = new StubHandler(HttpStatusCode.OK, ReleaseJson);
         var source = new GitHubReleaseSource(new HttpClient(handler), new MockFileSystem());
 
-        var release = await source.GetLatestAsync("tokajer", "TokaZerkUI", n => n.EndsWith(".zip"), CancellationToken.None);
+        var release = await source.GetLatestAsync("tokajer", "TokaZerkUI", false, n => n.EndsWith(".zip"), CancellationToken.None);
 
         Assert.NotNull(release);
         Assert.Equal(new TokaZerkUIConfig.Domain.SemVer(1, 0, 12), release!.Version);
@@ -45,7 +86,7 @@ public class GitHubReleaseSourceTests
         var handler = new StubHandler(HttpStatusCode.OK, ReleaseJson);
         var source = new GitHubReleaseSource(new HttpClient(handler), new MockFileSystem());
 
-        var release = await source.GetLatestAsync("tokajer", "TokaZerkUI", n => n.Contains("linux-x64"), CancellationToken.None);
+        var release = await source.GetLatestAsync("tokajer", "TokaZerkUI", false, n => n.Contains("linux-x64"), CancellationToken.None);
 
         Assert.NotNull(release);
         Assert.Equal("TokaZerkUIConfig-linux-x64", release!.AssetName);
@@ -58,7 +99,7 @@ public class GitHubReleaseSourceTests
         var handler = new StubHandler(HttpStatusCode.OK, ReleaseJson);
         var source = new GitHubReleaseSource(new HttpClient(handler), new MockFileSystem());
 
-        var release = await source.GetLatestAsync("tokajer", "TokaZerkUI", n => n.EndsWith(".dmg"), CancellationToken.None);
+        var release = await source.GetLatestAsync("tokajer", "TokaZerkUI", false, n => n.EndsWith(".dmg"), CancellationToken.None);
 
         Assert.Null(release);
     }
@@ -69,7 +110,46 @@ public class GitHubReleaseSourceTests
         var handler = new StubHandler(HttpStatusCode.NotFound, "");
         var source = new GitHubReleaseSource(new HttpClient(handler), new MockFileSystem());
 
-        var release = await source.GetLatestAsync("tokajer", "TokaZerkUI", _ => true, CancellationToken.None);
+        var release = await source.GetLatestAsync("tokajer", "TokaZerkUI", false, _ => true, CancellationToken.None);
+
+        Assert.Null(release);
+    }
+
+    [Fact]
+    public async Task GetLatestAsyncBetaPathReturnsHighestParsableVersionWithMatchingAsset()
+    {
+        var handler = new StubHandler(HttpStatusCode.OK, ReleaseListJson);
+        var source = new GitHubReleaseSource(new HttpClient(handler), new MockFileSystem());
+
+        var release = await source.GetLatestAsync("tokajer", "TokaZerkUI", true, n => n.EndsWith(".zip"), CancellationToken.None);
+
+        Assert.NotNull(release);
+        Assert.Equal(new TokaZerkUIConfig.Domain.SemVer(1, 0, 12, 0, 2), release!.Version);
+        Assert.Equal("TokaZerkUI-v1.0.12-beta.2.zip", release.AssetName);
+        Assert.NotNull(handler.LastRequest);
+        Assert.Equal("https://api.github.com/repos/tokajer/TokaZerkUI/releases?per_page=20", handler.LastRequest!.RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetLatestAsyncBetaPathAppliesAssetFilterPerRelease()
+    {
+        var handler = new StubHandler(HttpStatusCode.OK, ReleaseListJson);
+        var source = new GitHubReleaseSource(new HttpClient(handler), new MockFileSystem());
+
+        var release = await source.GetLatestAsync("tokajer", "TokaZerkUI", true, n => n.Contains("1.0.11"), CancellationToken.None);
+
+        Assert.NotNull(release);
+        Assert.Equal(new TokaZerkUIConfig.Domain.SemVer(1, 0, 11), release!.Version);
+        Assert.Equal("TokaZerkUI-v1.0.11.zip", release.AssetName);
+    }
+
+    [Fact]
+    public async Task GetLatestAsyncBetaPathReturnsNullOn404()
+    {
+        var handler = new StubHandler(HttpStatusCode.NotFound, "");
+        var source = new GitHubReleaseSource(new HttpClient(handler), new MockFileSystem());
+
+        var release = await source.GetLatestAsync("tokajer", "TokaZerkUI", true, _ => true, CancellationToken.None);
 
         Assert.Null(release);
     }
@@ -80,7 +160,7 @@ public class GitHubReleaseSourceTests
         var handler = new StubHandler(HttpStatusCode.InternalServerError, "boom");
         var source = new GitHubReleaseSource(new HttpClient(handler), new MockFileSystem());
 
-        await Assert.ThrowsAsync<HttpRequestException>(() => source.GetLatestAsync("tokajer", "TokaZerkUI", n => true, CancellationToken.None));
+        await Assert.ThrowsAsync<HttpRequestException>(() => source.GetLatestAsync("tokajer", "TokaZerkUI", false, n => true, CancellationToken.None));
     }
 
     [Fact]

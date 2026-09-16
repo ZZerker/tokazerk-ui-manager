@@ -12,6 +12,9 @@ internal sealed class GitHubRelease
 
     [JsonPropertyName("assets")]
     public GitHubAsset[]? Assets { get; set; }
+
+    [JsonPropertyName("draft")]
+    public bool Draft { get; set; }
 }
 
 internal sealed class GitHubAsset
@@ -24,6 +27,7 @@ internal sealed class GitHubAsset
 }
 
 [JsonSerializable(typeof(GitHubRelease))]
+[JsonSerializable(typeof(GitHubRelease[]))]
 internal partial class GitHubReleaseJsonContext : JsonSerializerContext
 {
 }

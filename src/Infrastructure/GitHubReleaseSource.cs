@@ -9,32 +9,79 @@ namespace TokaZerkUIConfig.Infrastructure;
 public sealed class GitHubReleaseSource(HttpClient httpClient, IFileSystem fileSystem) : IReleaseSource
 {
     private const int COPY_BUFFER_SIZE = 81920;
+    private const int PAGE_SIZE = 20;
 
-    public async Task<ReleaseInfo?> GetLatestAsync(string owner, string repo, Func<string, bool> assetFilter, CancellationToken ct)
+    public async Task<ReleaseInfo?> GetLatestAsync(string owner, string repo, bool includePreReleases, Func<string, bool> assetFilter, CancellationToken ct)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.github.com/repos/{owner}/{repo}/releases/latest");
+        if (!includePreReleases)
+        {
+            using var response = await SendAsync($"https://api.github.com/repos/{owner}/{repo}/releases/latest", ct).ConfigureAwait(false);
+            if (response is null)
+            {
+                return null;
+            }
+
+            var release = await JsonSerializer.DeserializeAsync(
+                await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false),
+                GitHubReleaseJsonContext.Default.GitHubRelease,
+                ct).ConfigureAwait(false);
+
+            return release is null ? null : ToReleaseInfo(release, assetFilter);
+        }
+
+        // /releases/latest never returns pre-releases, hence the list on the beta path.
+        using var listResponse = await SendAsync($"https://api.github.com/repos/{owner}/{repo}/releases?per_page={PAGE_SIZE}", ct).ConfigureAwait(false);
+        if (listResponse is null)
+        {
+            return null;
+        }
+
+        var releases = await JsonSerializer.DeserializeAsync(
+            await listResponse.Content.ReadAsStreamAsync(ct).ConfigureAwait(false),
+            GitHubReleaseJsonContext.Default.GitHubReleaseArray,
+            ct).ConfigureAwait(false);
+
+        if (releases is null)
+        {
+            return null;
+        }
+
+        return releases
+            .Where(r => !r.Draft)
+            .Select(r => ToReleaseInfo(r, assetFilter))
+            .Where(r => r is not null)
+            .MaxBy(r => r!.Version);
+    }
+
+    private async Task<HttpResponseMessage?> SendAsync(string url, CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         // GitHub rejects requests without a User-Agent header.
         request.Headers.UserAgent.Add(new ProductInfoHeaderValue("TokaZerkUIConfig", null));
 
-        using var response = await httpClient.SendAsync(request, ct).ConfigureAwait(false);
+        var response = await httpClient.SendAsync(request, ct).ConfigureAwait(false);
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
+            response.Dispose();
             return null;
         }
 
-        response.EnsureSuccessStatusCode();
-
-        var release = await JsonSerializer.DeserializeAsync(
-            await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false),
-            GitHubReleaseJsonContext.Default.GitHubRelease,
-            ct).ConfigureAwait(false);
-
-        if (release is null)
+        try
         {
-            return null;
+            response.EnsureSuccessStatusCode();
+        }
+        catch
+        {
+            response.Dispose();
+            throw;
         }
 
+        return response;
+    }
+
+    private static ReleaseInfo? ToReleaseInfo(GitHubRelease release, Func<string, bool> assetFilter)
+    {
         var asset = release.Assets?.FirstOrDefault(a => a.Name is not null && assetFilter(a.Name));
         if (asset is null || asset.Name is null || asset.BrowserDownloadUrl is null)
         {
