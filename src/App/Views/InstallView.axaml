@@ -48,11 +48,24 @@
     <TextBlock Text="{Binding InstalledUiText}" />
 
     <Button Content="Install TokaZerk UI"
+            Command="{Binding InstallCommand}"
             IsVisible="{Binding ShowInstallOffer}"
-            IsEnabled="False"
-            ToolTip.Tip="Available with the Updates section"
             HorizontalAlignment="Left"
             Margin="0,8,0,0" />
+
+    <ProgressBar Minimum="0"
+                 Maximum="1"
+                 Value="{Binding InstallProgress}"
+                 IsVisible="{Binding IsInstalling}"
+                 Width="200"
+                 HorizontalAlignment="Left"
+                 Margin="0,8,0,0" />
+
+    <TextBlock Text="Installing..."
+               IsVisible="{Binding IsInstalling}"
+               FontSize="11"
+               Foreground="{DynamicResource TextSecondaryBrush}"
+               Margin="0,4,0,0" />
 
     <TextBlock Text="The UI currently in ui/custom is zipped to ui/backups before anything is replaced."
                IsVisible="{Binding ShowZipNotice}"

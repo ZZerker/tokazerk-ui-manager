@@ -13,7 +13,8 @@ public class UpdateUiTests
             new StubReleaseSource(),
             new StubUiArchiveStore(),
             new StubInstalledUiReader { InstalledUi = new InstalledUi(InstalledUiKind.Other, null) },
-            settingsRepository);
+            settingsRepository,
+            new StubPreviewRenderer());
 
     [Fact]
     public async Task ReappliesSavedFontsAndVariantsAndClearsBackupFirst()

@@ -14,7 +14,8 @@ public class InstallUiTests
         var archiveStore = new StubUiArchiveStore();
         var installedUiReader = new StubInstalledUiReader { InstalledUi = new InstalledUi(InstalledUiKind.Other, null) };
         var settingsRepository = new StubSettingsRepository { Stored = UiSettings.Default };
-        var useCase = new InstallUi(releaseSource, archiveStore, installedUiReader, settingsRepository);
+        var previewRenderer = new StubPreviewRenderer();
+        var useCase = new InstallUi(releaseSource, archiveStore, installedUiReader, settingsRepository, previewRenderer);
 
         var result = await useCase.ExecuteAsync("custom", Release, null, CancellationToken.None);
 
@@ -22,6 +23,7 @@ public class InstallUiTests
         Assert.Equal(["Download"], releaseSource.Calls);
         Assert.Equal(["Verify", "Archive", "Install", "DiscardDownload"], archiveStore.Calls);
         Assert.Equal(UiSettings.Default, settingsRepository.Stored);
+        Assert.Equal(1, previewRenderer.InvalidateCalls);
     }
 
     [Fact]
@@ -31,12 +33,14 @@ public class InstallUiTests
         var archiveStore = new StubUiArchiveStore { ThrowOnVerify = true };
         var installedUiReader = new StubInstalledUiReader { InstalledUi = new InstalledUi(InstalledUiKind.Other, null) };
         var settingsRepository = new StubSettingsRepository();
-        var useCase = new InstallUi(releaseSource, archiveStore, installedUiReader, settingsRepository);
+        var previewRenderer = new StubPreviewRenderer();
+        var useCase = new InstallUi(releaseSource, archiveStore, installedUiReader, settingsRepository, previewRenderer);
 
         var result = await useCase.ExecuteAsync("custom", Release, null, CancellationToken.None);
 
         Assert.False(result.Success);
         Assert.Equal(["Verify", "DiscardDownload"], archiveStore.Calls);
+        Assert.Equal(0, previewRenderer.InvalidateCalls);
     }
 
     [Fact]
@@ -46,7 +50,8 @@ public class InstallUiTests
         var archiveStore = new StubUiArchiveStore();
         var installedUiReader = new StubInstalledUiReader { InstalledUi = new InstalledUi(InstalledUiKind.None, null) };
         var settingsRepository = new StubSettingsRepository();
-        var useCase = new InstallUi(releaseSource, archiveStore, installedUiReader, settingsRepository);
+        var previewRenderer = new StubPreviewRenderer();
+        var useCase = new InstallUi(releaseSource, archiveStore, installedUiReader, settingsRepository, previewRenderer);
 
         var result = await useCase.ExecuteAsync("custom", Release, null, CancellationToken.None);
 

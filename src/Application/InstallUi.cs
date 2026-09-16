@@ -3,7 +3,7 @@ using TokaZerkUIConfig.Domain.Ports;
 
 namespace TokaZerkUIConfig.Application;
 
-public sealed class InstallUi(IReleaseSource releaseSource, IUiArchiveStore archiveStore, IInstalledUiReader installedUiReader, ISettingsRepository settingsRepository)
+public sealed class InstallUi(IReleaseSource releaseSource, IUiArchiveStore archiveStore, IInstalledUiReader installedUiReader, ISettingsRepository settingsRepository, IUiPreviewRenderer previewRenderer)
 {
     public async Task<ApplyResult> ExecuteAsync(string customPath, ReleaseInfo release, IProgress<double>? progress, CancellationToken ct)
     {
@@ -23,6 +23,9 @@ public sealed class InstallUi(IReleaseSource releaseSource, IUiArchiveStore arch
             var existing = await settingsRepository.LoadAsync(customPath, ct).ConfigureAwait(false) ?? UiSettings.Default;
 
             await archiveStore.InstallAsync(temp, customPath, ct).ConfigureAwait(false);
+
+            // The renderer caches the loaded package per path, so it must be dropped after a fresh install.
+            previewRenderer.Invalidate();
 
             await settingsRepository.SaveAsync(customPath, existing, ct).ConfigureAwait(false);
 

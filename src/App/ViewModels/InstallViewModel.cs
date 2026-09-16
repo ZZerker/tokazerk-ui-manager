@@ -6,13 +6,19 @@ using TokaZerkUIConfig.Domain;
 
 namespace TokaZerkUIConfig.App.ViewModels;
 
-public sealed partial class InstallViewModel(DetectInstalls detectInstalls, ValidateInstall validateInstall) : SectionViewModel
+public sealed partial class InstallViewModel(
+    DetectInstalls detectInstalls,
+    ValidateInstall validateInstall,
+    CheckForUpdates checkForUpdates,
+    InstallUi installUi) : SectionViewModel
 {
     public override string Title => "Install";
 
     public ObservableCollection<UiInstall> Installs { get; } = [];
 
     public event EventHandler? InstallSelected;
+
+    public event EventHandler? Installed;
 
     // Set by the view; the browse command needs a TopLevel the view model must not know about.
     public Func<Task<string?>>? PickFolder { get; set; }
@@ -22,6 +28,7 @@ public sealed partial class InstallViewModel(DetectInstalls detectInstalls, Vali
         OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(InstallCommand))]
     private UiInstall? selectedInstall;
 
     [ObservableProperty]
@@ -31,10 +38,18 @@ public sealed partial class InstallViewModel(DetectInstalls detectInstalls, Vali
     private string installedUiText = "";
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(InstallCommand))]
     private bool showInstallOffer;
 
     [ObservableProperty]
     private bool showZipNotice;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(InstallCommand))]
+    private bool isInstalling;
+
+    [ObservableProperty]
+    private double installProgress;
 
     partial void OnSelectedInstallChanged(UiInstall? value)
     {
@@ -98,6 +113,46 @@ public sealed partial class InstallViewModel(DetectInstalls detectInstalls, Vali
 
         this.Installs.Add(install);
         this.SelectedInstall = install;
+    }
+
+    private bool CanInstall() => this.ShowInstallOffer && !this.IsInstalling && this.SelectedInstall is not null;
+
+    [RelayCommand(CanExecute = nameof(CanInstall))]
+    private async Task InstallAsync(CancellationToken ct)
+    {
+        this.Error = null;
+        this.IsInstalling = true;
+        try
+        {
+            var customPath = this.SelectedInstall!.CustomPath;
+            var check = await checkForUpdates.ExecuteAsync(customPath, AppVersion.Current, AppVersion.Rid, ct);
+            if (check.UiRelease is null)
+            {
+                this.Error = "No TokaZerk UI release found on GitHub";
+                return;
+            }
+
+            // Progress<T> marshals to the UI thread's SynchronizationContext, which is what we want here.
+            var progress = new Progress<double>(p => this.InstallProgress = p);
+            var result = await installUi.ExecuteAsync(customPath, check.UiRelease, progress, ct);
+            if (!result.Success)
+            {
+                this.Error = result.Error;
+            }
+            else
+            {
+                this.Installed?.Invoke(this, EventArgs.Empty);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            this.Error = ex.Message;
+        }
+        finally
+        {
+            this.IsInstalling = false;
+            this.InstallProgress = 0;
+        }
     }
 
     public void Load(CurrentState state)

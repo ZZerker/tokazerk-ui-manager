@@ -117,6 +117,19 @@ internal sealed class StubUiArchiveStore : IUiArchiveStore
     }
 }
 
+internal sealed class StubPreviewRenderer : IUiPreviewRenderer
+{
+    public int InvalidateCalls { get; private set; }
+
+    public Task<PreviewImage> RenderAsync(string customPath, string windowId, FontSettings settings, CancellationToken ct) =>
+        throw new NotSupportedException();
+
+    public void Invalidate()
+    {
+        this.InvalidateCalls++;
+    }
+}
+
 internal sealed class StubBackupStore : IBackupStore
 {
     public bool Cleared { get; private set; }

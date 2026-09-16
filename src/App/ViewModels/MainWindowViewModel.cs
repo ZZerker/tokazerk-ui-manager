@@ -110,6 +110,7 @@ public partial class MainWindowViewModel(
         maps.SelectionChanged += this.OnSelectionChanged;
         windows.SelectionChanged += this.OnSelectionChanged;
         install.InstallSelected += this.OnInstallSelected;
+        install.Installed += this.OnInstalled;
         this.selectionEventsSubscribed = true;
     }
 
@@ -123,6 +124,19 @@ public partial class MainWindowViewModel(
     {
         this.InstallPath = install.SelectedInstall?.CustomPath;
 
+        try
+        {
+            await this.RefreshSectionsAsync(CancellationToken.None);
+            this.HasUnsavedChanges = false;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            install.Error = ex.Message;
+        }
+    }
+
+    private async void OnInstalled(object? sender, EventArgs e)
+    {
         try
         {
             await this.RefreshSectionsAsync(CancellationToken.None);

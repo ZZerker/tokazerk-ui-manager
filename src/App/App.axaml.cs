@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TokaZerkUIConfig.App.ViewModels;
 using TokaZerkUIConfig.App.Views;
 using TokaZerkUIConfig.Application;
+using TokaZerkUIConfig.Domain.Ports;
 using TokaZerkUIConfig.Infrastructure;
 
 namespace TokaZerkUIConfig.App;
@@ -25,6 +26,7 @@ public partial class App : Avalonia.Application
         services.AddInfrastructure();
         services.AddViewModels();
         Services = services.BuildServiceProvider();
+        Services.GetRequiredService<ISelfUpdater>().CleanupOnStart();
 
         if (this.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
