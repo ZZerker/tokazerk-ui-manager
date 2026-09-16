@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Domain\Domain.csproj" />
+    <ProjectReference Include="..\..\external\daoc-ui-forge\src\DaocUiForge.Core\DaocUiForge.Core.csproj" />
   </ItemGroup>
 
 </Project>

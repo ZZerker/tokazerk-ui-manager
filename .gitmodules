@@ -1,0 +1,3 @@
+[submodule "external/daoc-ui-forge"]
+	path = external/daoc-ui-forge
+	url = https://github.com/tokajer/daoc-ui-forge.git

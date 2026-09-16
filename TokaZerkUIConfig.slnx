@@ -10,4 +10,7 @@
     <Project Path="tests/Application.Tests/Application.Tests.csproj" />
     <Project Path="tests/Infrastructure.Tests/Infrastructure.Tests.csproj" />
   </Folder>
+  <Folder Name="/external/">
+    <Project Path="external/daoc-ui-forge/src/DaocUiForge.Core/DaocUiForge.Core.csproj" />
+  </Folder>
 </Solution>
