@@ -6,6 +6,6 @@ public partial class WindowsView : UserControl
 {
     public WindowsView()
     {
-        InitializeComponent();
+        this.InitializeComponent();
     }
 }

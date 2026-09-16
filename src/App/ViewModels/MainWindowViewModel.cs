@@ -3,10 +3,10 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace TokaZerkUIConfig.App.ViewModels;
 
-public partial class MainWindowViewModel : ObservableObject
+public partial class MainWindowViewModel(InstallViewModel install, MapsViewModel maps, FontsViewModel fonts, WindowsViewModel windows, UpdatesViewModel updates) : ObservableObject
 {
     [ObservableProperty]
-    private SectionViewModel selected;
+    private SectionViewModel selected = install;
 
     [ObservableProperty]
     private string? installPath;
@@ -16,18 +16,7 @@ public partial class MainWindowViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(ResetCommand))]
     private bool hasUnsavedChanges;
 
-    public IReadOnlyList<SectionViewModel> Sections { get; }
-
-    public MainWindowViewModel(
-        InstallViewModel install,
-        MapsViewModel maps,
-        FontsViewModel fonts,
-        WindowsViewModel windows,
-        UpdatesViewModel updates)
-    {
-        Sections = new SectionViewModel[] { install, maps, fonts, windows, updates };
-        selected = install;
-    }
+    public IReadOnlyList<SectionViewModel> Sections { get; } = [install, maps, fonts, windows, updates];
 
     [RelayCommand(CanExecute = nameof(HasUnsavedChanges))]
     private void Apply()

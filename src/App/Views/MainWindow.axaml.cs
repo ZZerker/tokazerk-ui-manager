@@ -8,24 +8,24 @@ public partial class MainWindow : Window
 {
     public MainWindow()
     {
-        InitializeComponent();
+        this.InitializeComponent();
     }
 
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
-            BeginMoveDrag(e);
+            this.BeginMoveDrag(e);
         }
     }
 
     private void OnMinimizeClick(object? sender, RoutedEventArgs e)
     {
-        WindowState = WindowState.Minimized;
+        this.WindowState = WindowState.Minimized;
     }
 
     private void OnCloseClick(object? sender, RoutedEventArgs e)
     {
-        Close();
+        this.Close();
     }
 }

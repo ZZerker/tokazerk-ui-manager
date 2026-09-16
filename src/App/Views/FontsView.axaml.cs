@@ -6,6 +6,6 @@ public partial class FontsView : UserControl
 {
     public FontsView()
     {
-        InitializeComponent();
+        this.InitializeComponent();
     }
 }

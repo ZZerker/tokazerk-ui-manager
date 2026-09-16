@@ -6,6 +6,6 @@ public partial class MapsView : UserControl
 {
     public MapsView()
     {
-        InitializeComponent();
+        this.InitializeComponent();
     }
 }

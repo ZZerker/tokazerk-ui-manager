@@ -6,6 +6,6 @@ public partial class UpdatesView : UserControl
 {
     public UpdatesView()
     {
-        InitializeComponent();
+        this.InitializeComponent();
     }
 }

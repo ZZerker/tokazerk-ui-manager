@@ -6,6 +6,6 @@ public partial class InstallView : UserControl
 {
     public InstallView()
     {
-        InitializeComponent();
+        this.InitializeComponent();
     }
 }
