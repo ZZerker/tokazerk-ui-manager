@@ -37,7 +37,8 @@ public sealed class ForgePreviewRenderer : IUiPreviewRenderer, IDisposable
                 // PackageLoader reads directly from System.IO, not IFileSystem: it belongs to the
                 // external DaocUiForge.Core dependency and is not something this repo owns.
                 var package = await Task.Run(() => PackageLoader.LoadFromDirectory(normalizedPath, SkippedFolders), ct).ConfigureAwait(false);
-                this.context = new RenderContext(package);
+                // The preview shows the window as the game draws it, not as the editor annotates it.
+                this.context = new RenderContext(package, new RenderOptions { MarkMissing = false, ShowEditorHints = false });
                 this.cachedPath = normalizedPath;
                 ct.ThrowIfCancellationRequested();
             }
