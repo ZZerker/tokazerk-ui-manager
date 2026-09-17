@@ -43,7 +43,7 @@ public class CheckForUpdatesTests
     {
         var releaseSource = new StubReleaseSource();
         releaseSource.ReleaseByRepo[ReleaseRepositories.TOOL_REPO] =
-            new ReleaseInfo(new SemVer(2, 0, 0), "v2.0.0", "TokaZerkUIConfig-win-x64.zip", "https://example.test/tool.zip", "");
+            new ReleaseInfo(new SemVer(2, 0, 0), "v2.0.0", "TokaZerkUIManager-win-x64.exe", "https://example.test/tool.exe", "");
         var installedUiReader = new StubInstalledUiReader();
         var toolConfigStore = new StubToolConfigStore();
         var useCase = new CheckForUpdates(releaseSource, installedUiReader, toolConfigStore);

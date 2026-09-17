@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <AssemblyName>TokaZerkUIConfig.App</AssemblyName>
+    <AssemblyName>TokaZerkUIManager</AssemblyName>
     <RootNamespace>TokaZerkUIConfig.App</RootNamespace>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>

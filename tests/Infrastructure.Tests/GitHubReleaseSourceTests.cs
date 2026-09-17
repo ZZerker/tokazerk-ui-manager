@@ -14,8 +14,8 @@ public class GitHubReleaseSourceTests
           "body": "notes",
           "assets": [
             { "name": "TokaZerkUI-v1.0.12.zip", "browser_download_url": "https://example.com/TokaZerkUI-v1.0.12.zip" },
-            { "name": "TokaZerkUIConfig-win-x64.exe", "browser_download_url": "https://example.com/TokaZerkUIConfig-win-x64.exe" },
-            { "name": "TokaZerkUIConfig-linux-x64", "browser_download_url": "https://example.com/TokaZerkUIConfig-linux-x64" }
+            { "name": "TokaZerkUIManager-win-x64.exe", "browser_download_url": "https://example.com/TokaZerkUIManager-win-x64.exe" },
+            { "name": "TokaZerkUIManager-linux-x64", "browser_download_url": "https://example.com/TokaZerkUIManager-linux-x64" }
           ]
         }
         """;
@@ -78,6 +78,7 @@ public class GitHubReleaseSourceTests
         Assert.NotNull(handler.LastRequest);
         Assert.Equal("https://api.github.com/repos/tokajer/TokaZerkUI/releases/latest", handler.LastRequest!.RequestUri!.ToString());
         Assert.True(handler.LastRequest.Headers.UserAgent.Count > 0);
+        Assert.Equal("TokaZerkUIManager", handler.LastRequest!.Headers.UserAgent.Single().Product!.Name);
     }
 
     [Fact]
@@ -89,8 +90,8 @@ public class GitHubReleaseSourceTests
         var release = await source.GetLatestAsync("tokajer", "TokaZerkUI", false, n => n.Contains("linux-x64"), CancellationToken.None);
 
         Assert.NotNull(release);
-        Assert.Equal("TokaZerkUIConfig-linux-x64", release!.AssetName);
-        Assert.Equal("https://example.com/TokaZerkUIConfig-linux-x64", release.AssetUrl);
+        Assert.Equal("TokaZerkUIManager-linux-x64", release!.AssetName);
+        Assert.Equal("https://example.com/TokaZerkUIManager-linux-x64", release.AssetUrl);
     }
 
     [Fact]

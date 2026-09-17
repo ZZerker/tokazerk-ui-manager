@@ -3,7 +3,7 @@
 
   <Styles.Resources>
     <ResourceDictionary>
-      <FontFamily x:Key="TokaFont">avares://TokaZerkUIConfig.App/Assets/Fonts#IBM Plex Sans</FontFamily>
+      <FontFamily x:Key="TokaFont">avares://TokaZerkUIManager/Assets/Fonts#IBM Plex Sans</FontFamily>
 
       <SolidColorBrush x:Key="GroundBrush">#181717</SolidColorBrush>
       <SolidColorBrush x:Key="AccentBrush">#38A59D</SolidColorBrush>

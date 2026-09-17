@@ -8,19 +8,25 @@ public class ReleaseRepositoriesTests
     [Fact]
     public void IsToolAsset_MatchesWinX64ExeName()
     {
-        Assert.True(ReleaseRepositories.IsToolAsset("TokaZerkUIConfig-win-x64.exe", "win-x64"));
+        Assert.True(ReleaseRepositories.IsToolAsset("TokaZerkUIManager-win-x64.exe", "win-x64"));
     }
 
     [Fact]
     public void IsToolAsset_MatchesLinuxX64Name()
     {
-        Assert.True(ReleaseRepositories.IsToolAsset("TokaZerkUIConfig-linux-x64", "linux-x64"));
+        Assert.True(ReleaseRepositories.IsToolAsset("TokaZerkUIManager-linux-x64", "linux-x64"));
     }
 
     [Fact]
     public void IsToolAsset_DoesNotMatchLinuxX64MuslAgainstLinuxX64()
     {
-        Assert.False(ReleaseRepositories.IsToolAsset("TokaZerkUIConfig-linux-x64-musl", "linux-x64"));
+        Assert.False(ReleaseRepositories.IsToolAsset("TokaZerkUIManager-linux-x64-musl", "linux-x64"));
+    }
+
+    [Fact]
+    public void IsToolAsset_DoesNotMatchLinuxX64Exe()
+    {
+        Assert.False(ReleaseRepositories.IsToolAsset("TokaZerkUIManager-linux-x64.exe", "linux-x64"));
     }
 
     [Fact]
@@ -32,6 +38,6 @@ public class ReleaseRepositoriesTests
     [Fact]
     public void IsUiAsset_RejectsToolExe()
     {
-        Assert.False(ReleaseRepositories.IsUiAsset("TokaZerkUIConfig-win-x64.exe"));
+        Assert.False(ReleaseRepositories.IsUiAsset("TokaZerkUIManager-win-x64.exe"));
     }
 }

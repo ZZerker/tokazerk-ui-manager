@@ -4,7 +4,7 @@
         xmlns:views="using:TokaZerkUIConfig.App.Views"
         x:Class="TokaZerkUIConfig.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="TokaZerk UI Config"
+        Title="TokaZerk UI Manager"
         Width="720"
         Height="480"
         CanResize="False"
@@ -40,7 +40,7 @@
             PointerPressed="OnTitleBarPointerPressed">
       <Grid ColumnDefinitions="*,32,32">
         <TextBlock Grid.Column="0"
-                   Text="TokaZerk UI Config"
+                   Text="TokaZerk UI Manager"
                    Foreground="{StaticResource TextSecondaryBrush}"
                    FontSize="12"
                    VerticalAlignment="Center"

@@ -58,7 +58,7 @@ public sealed class GitHubReleaseSource(HttpClient httpClient, IFileSystem fileS
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         // GitHub rejects requests without a User-Agent header.
-        request.Headers.UserAgent.Add(new ProductInfoHeaderValue("TokaZerkUIConfig", null));
+        request.Headers.UserAgent.Add(new ProductInfoHeaderValue("TokaZerkUIManager", null));
 
         var response = await httpClient.SendAsync(request, ct).ConfigureAwait(false);
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
