@@ -12,6 +12,8 @@ public sealed partial class InstallViewModel(
     CheckForUpdates checkForUpdates,
     InstallUi installUi) : SectionViewModel
 {
+    private bool isLoadingToolConfig;
+
     public override string Title => "Install";
 
     public ObservableCollection<UiInstall> Installs { get; } = [];
@@ -19,6 +21,8 @@ public sealed partial class InstallViewModel(
     public event EventHandler? InstallSelected;
 
     public event EventHandler? Installed;
+
+    public event EventHandler? UpdateChannelChanged;
 
     // Set by the view; the browse command needs a TopLevel the view model must not know about.
     public Func<Task<string?>>? PickFolder { get; set; }
@@ -49,7 +53,20 @@ public sealed partial class InstallViewModel(
     private bool isInstalling;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(InstallCommand))]
+    private bool isSavingToolConfig;
+
+    [ObservableProperty]
     private double installProgress;
+
+    [ObservableProperty]
+    private bool includeBetaReleases;
+
+    [ObservableProperty]
+    private bool isToolConfigLoaded;
+
+    [ObservableProperty]
+    private string? configError;
 
     partial void OnSelectedInstallChanged(UiInstall? value)
     {
@@ -57,6 +74,21 @@ public sealed partial class InstallViewModel(
         {
             this.InstallSelected?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    partial void OnIncludeBetaReleasesChanged(bool value)
+    {
+        if (!this.isLoadingToolConfig)
+        {
+            this.UpdateChannelChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public void LoadToolConfig(ToolConfig config)
+    {
+        this.isLoadingToolConfig = true;
+        this.IncludeBetaReleases = config.UpdateChannel == UpdateChannel.Beta;
+        this.isLoadingToolConfig = false;
     }
 
     public async Task DetectAsync(CancellationToken ct)
@@ -115,7 +147,10 @@ public sealed partial class InstallViewModel(
         this.SelectedInstall = install;
     }
 
-    private bool CanInstall() => this.ShowInstallOffer && !this.IsInstalling && this.SelectedInstall is not null;
+    private bool CanInstall() => this.ShowInstallOffer
+        && !this.IsInstalling
+        && !this.IsSavingToolConfig
+        && this.SelectedInstall is not null;
 
     [RelayCommand(CanExecute = nameof(CanInstall))]
     private async Task InstallAsync(CancellationToken ct)

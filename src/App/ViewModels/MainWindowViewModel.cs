@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TokaZerkUIConfig.Application;
 using TokaZerkUIConfig.Domain;
+using TokaZerkUIConfig.Domain.Ports;
 
 namespace TokaZerkUIConfig.App.ViewModels;
 
@@ -12,10 +13,14 @@ public partial class MainWindowViewModel(
     WindowsViewModel windows,
     UpdatesViewModel updates,
     LoadCurrentState loadCurrentState,
-    ApplyVariant applyVariant) : ObservableObject
+    ApplyVariant applyVariant,
+    IToolConfigStore toolConfigStore) : ObservableObject
 {
     private int selectionRevision;
+    private int pendingToolConfigSaves;
     private bool selectionEventsSubscribed;
+    private readonly SemaphoreSlim toolConfigLock = new(1, 1);
+    private ToolConfig toolConfig = ToolConfig.Default;
 
     [ObservableProperty]
     private SectionViewModel selected = install;
@@ -36,6 +41,7 @@ public partial class MainWindowViewModel(
     public async Task InitializeAsync(CancellationToken ct)
     {
         this.SubscribeToSelectionChanges();
+        await this.LoadToolConfigAsync(ct);
 
         await install.DetectAsync(ct);
         this.InstallPath = install.SelectedInstall?.CustomPath;
@@ -111,6 +117,8 @@ public partial class MainWindowViewModel(
         windows.SelectionChanged += this.OnSelectionChanged;
         install.InstallSelected += this.OnInstallSelected;
         install.Installed += this.OnInstalled;
+        install.UpdateChannelChanged += this.OnUpdateChannelChanged;
+        updates.UpdateChannelChanged += this.OnUpdateChannelChanged;
         this.selectionEventsSubscribed = true;
     }
 
@@ -146,6 +154,73 @@ public partial class MainWindowViewModel(
         {
             install.Error = ex.Message;
         }
+    }
+
+    private async void OnUpdateChannelChanged(object? sender, EventArgs e)
+    {
+        var includeBetaReleases = sender == updates
+            ? updates.IncludeBetaReleases
+            : install.IncludeBetaReleases;
+        this.toolConfig = this.toolConfig with
+        {
+            UpdateChannel = includeBetaReleases ? UpdateChannel.Beta : UpdateChannel.Stable
+        };
+        this.LoadToolConfig(this.toolConfig);
+        this.pendingToolConfigSaves++;
+        install.IsSavingToolConfig = true;
+
+        await this.toolConfigLock.WaitAsync();
+        try
+        {
+            await toolConfigStore.SaveAsync(this.toolConfig, CancellationToken.None);
+            this.SetToolConfigError(null);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            this.SetToolConfigError("Could not save update settings");
+        }
+        finally
+        {
+            this.pendingToolConfigSaves--;
+            install.IsSavingToolConfig = this.pendingToolConfigSaves > 0;
+            this.toolConfigLock.Release();
+        }
+    }
+
+    private async Task LoadToolConfigAsync(CancellationToken ct)
+    {
+        try
+        {
+            this.toolConfig = await toolConfigStore.LoadAsync(ct);
+            this.LoadToolConfig(this.toolConfig);
+            this.SetToolConfigError(null);
+            this.SetToolConfigLoaded();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            this.toolConfig = ToolConfig.Default;
+            this.LoadToolConfig(this.toolConfig);
+            this.SetToolConfigError("Could not load update settings");
+            this.SetToolConfigLoaded();
+        }
+    }
+
+    private void LoadToolConfig(ToolConfig config)
+    {
+        install.LoadToolConfig(config);
+        updates.LoadToolConfig(config);
+    }
+
+    private void SetToolConfigError(string? error)
+    {
+        install.ConfigError = error;
+        updates.ConfigError = error;
+    }
+
+    private void SetToolConfigLoaded()
+    {
+        install.IsToolConfigLoaded = true;
+        updates.IsToolConfigLoaded = true;
     }
 
     private async Task RefreshSectionsAsync(CancellationToken ct)

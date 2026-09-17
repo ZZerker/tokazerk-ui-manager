@@ -3,8 +3,20 @@
              xmlns:vm="using:TokaZerkUIConfig.App.ViewModels"
              x:Class="TokaZerkUIConfig.App.Views.UpdatesView"
              x:DataType="vm:UpdatesViewModel">
-  <TextBlock Text="{Binding Title}"
-             FontSize="14"
-             FontWeight="Bold"
-             Margin="16" />
+  <StackPanel Margin="16">
+    <TextBlock Text="{Binding Title}"
+               FontSize="14"
+               FontWeight="Bold"
+               Margin="0,0,0,8" />
+
+    <CheckBox Content="Include beta releases"
+              IsChecked="{Binding IncludeBetaReleases}"
+              IsEnabled="{Binding IsToolConfigLoaded}" />
+
+    <TextBlock Text="{Binding ConfigError}"
+               IsVisible="{Binding ConfigError, Converter={x:Static ObjectConverters.IsNotNull}}"
+               TextWrapping="Wrap"
+               Foreground="#E06C6C"
+               Margin="0,4,0,0" />
+  </StackPanel>
 </UserControl>
