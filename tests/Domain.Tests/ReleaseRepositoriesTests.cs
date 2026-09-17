@@ -6,6 +6,13 @@ namespace TokaZerkUIConfig.Domain.Tests;
 public class ReleaseRepositoriesTests
 {
     [Fact]
+    public void ToolRepositoryUsesZerkerOwner()
+    {
+        Assert.Equal("ZZerker", ReleaseRepositories.TOOL_OWNER);
+        Assert.Equal("tokazerk-ui-manager", ReleaseRepositories.TOOL_REPO);
+    }
+
+    [Fact]
     public void IsToolAsset_MatchesWinX64ExeName()
     {
         Assert.True(ReleaseRepositories.IsToolAsset("TokaZerkUIManager-win-x64.exe", "win-x64"));

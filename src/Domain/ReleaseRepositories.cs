@@ -4,7 +4,7 @@ public static class ReleaseRepositories
 {
     public const string UI_OWNER = "tokajer";
     public const string UI_REPO = "tokajerui";
-    public const string TOOL_OWNER = "tokajer";
+    public const string TOOL_OWNER = "ZZerker";
     public const string TOOL_REPO = "tokazerk-ui-manager";
 
     public static bool IsUiAsset(string name) =>
