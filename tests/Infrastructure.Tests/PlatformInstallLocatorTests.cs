@@ -190,7 +190,7 @@ public class PlatformInstallLocatorTests
         AddInstall(fileSystem, root);
         var locator = new PlatformInstallLocator(fileSystem, new LocatorEnvironment(null, null, null, null, IsWindows: true));
 
-        // Mixed separators, as a launcher config might supply them (e.g. "C:/Spiele/Blackthorn DAoC\ui\custom").
+        // Mixed separators, as a launcher config might supply them (e.g. "C:/Games/Blackthorn DAoC\ui\custom").
         var mixedRoot = @"C:/Games\Eden DAoC";
 
         var install = locator.Validate(mixedRoot);

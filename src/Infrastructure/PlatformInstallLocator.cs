@@ -34,8 +34,6 @@ public sealed class PlatformInstallLocator(IFileSystem fileSystem, LocatorEnviro
             {
                 this.AddIfValid(found, fileSystem.Path.Combine(environment.ProgramFiles, "Electronic Arts", "Dark Age of Camelot"), InstallSource.WellKnown);
             }
-
-            this.AddIfValid(found, @"C:\Spiele\Eden DAoC", InstallSource.WellKnown);
         }
 
         var deduped = found
@@ -74,7 +72,7 @@ public sealed class PlatformInstallLocator(IFileSystem fileSystem, LocatorEnviro
 
     private UiInstall? BuildInstall(string root, InstallSource source)
     {
-        // Normalize a launcher-supplied root (which may mix separators, e.g. "C:/Spiele/Blackthorn DAoC\ui\custom")
+        // Normalize a launcher-supplied root (which may mix separators, e.g. "C:/Games/Blackthorn DAoC\ui\custom")
         // so the stored GameRoot is comparable and displayable in normal form.
         var fullRoot = fileSystem.Path.GetFullPath(root);
         var camelotExe = fileSystem.Path.Combine(fullRoot, "camelot.exe");
